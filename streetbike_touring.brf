@@ -169,7 +169,7 @@ assign tier7 3.0
 assign smoothness_cost
 	# smoothnes value is the best option to determine smoothness
 	if ( not smoothness= ) then
-		if smoothness=excellent then -0.2
+		if smoothness=excellent then -0.1
 		else if smoothness=good then tier0
 		else if smoothness=intermediate then tier1
 		else if smoothness=bad then tier4
