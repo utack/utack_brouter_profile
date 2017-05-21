@@ -50,8 +50,8 @@ assign badoneway =
 	else oneway=-1
 
 # Determine if there is a cycleway
-# TODO: unfinised for cycleway:right and left
-assign hascyclewayboth
+assign hascycleway
+	# cycleway in both directions
 	if
 	and ( not cycleway= )
 	and ( not cycleway=opposite|opposite_lane|opposite_track )
@@ -61,14 +61,17 @@ assign hascyclewayboth
 	else if
 	and ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) ) ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) )
 	then true
+	# no cycleway in either direction
+	else if
+	and ( or cycleway= cycleway=no|none|proposed ) and ( or cycleway:left= cycleway:left=no|sidepath ) ( or cycleway:right= cycleway:right=no|sidepath )
+	then false
+	# cycleway in the direction we are driving only
+	else if	and reversedirection=yes ( or ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) ) cycleway=left ) then true
+	else if and ( not reversedirection=yes ) ( or ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) ) cycleway=right ) then true
+	else if and ( not reversedirection=yes ) ( or cycleway:left=opposite|opposite_lane|opposite_track cycleway=right ) then true
+	else if and reversedirection=yes ( or cycleway:right=opposite|opposite_lane|opposite_track cycleway=left ) then true
 	else false
-assign hascyclewaynone not and ( or cycleway= cycleway=no|none|proposed ) and ( or cycleway:left= cycleway:left=no|sidepath ) ( or cycleway:right= cycleway:right=no|sidepath )
 
-assign hascycleway
-	if hascyclewayboth then true
-	else if hascyclewaynone then false
-	#TODO
-	else false
 
 # Needed to trigger initialcost, any fantasy value works as long as they differ for waytypes
 # Value chances when going from way to way means initialcost is added
@@ -150,7 +153,7 @@ assign turncost 50
 
 assign access_cost
 	if bikeaccess then 0.0
-	else if footaccess then 10
+	else if footaccess then 15
 	else 10000
 
 ################################################################
@@ -162,7 +165,7 @@ assign tier1 0.1
 assign tier2 0.3
 assign tier3 0.4
 assign tier4 0.6
-assign tier5 0.8
+assign tier5 1.0
 assign tier6 1.5
 assign tier7 3.0
 
@@ -271,7 +274,7 @@ assign traffic_cost
 	else if not hascycleway then
 		if highway=trunk|trunk_link|primary|primary_link then traffic_tier4
 		else if highway=secondary|secondary_link|tertiary|tertiary_link then traffic_tier3
-		else if highway=residential|road|unknown then traffic_tier2
+		else if highway=residential|road|unknown|unclassified then traffic_tier2
 		else 0.0
 	else if hascycleway then
 		if highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
@@ -379,11 +382,11 @@ assign accesscost_node
 ################################################################
 
 assign nodecost =
-	if highway=traffic_signals then 120
+	if highway=traffic_signals then 100
 	else if highway=stop|give_way  then 50
-	else if crossing=traffic_signals then 80
-	else if railway=level_crossing then 120
-	else if railway=crossing then 120
+	else if crossing=traffic_signals then 100
+	else if railway=level_crossing then 100
+	else if railway=crossing then 100
 	else if railway=signal then 150
 	else if ford=yes then 500
 	else if highway=steps then 200
