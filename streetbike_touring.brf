@@ -91,7 +91,7 @@ assign initialclassifier
 	else if highway=service|rest_area|services then 12
 	else if highway=track|path then 13
 	else if highway=footway|pedestrian then 14
-	else if highway=road|unclassified|unknown then 15
+	else if highway=road|unclassified then 15
 	else if highway=crossing then 16
 	else if highway=steps then 17
 	else if highway=corridor then 18
@@ -108,7 +108,7 @@ assign bikeaccess
 	else if access=private|no|agricultural|customers|delivery then false
 	# no explicit access rules, make assumptions based on waytype
 	else if
-		or highway=residential|service|unclassified|road|unknown|living_street|rest_area|services
+		or highway=residential|service|unclassified|road|living_street|rest_area|services
 		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 		or highway=track|path|cycleway|crossing
 		( and highway=steps ramp:bicycle=yes )
@@ -123,7 +123,7 @@ assign footaccess
 	else if access=private|no|agricultural|customers|delivery then false
 	# no explicit access rules, make assumptions based on waytype
 	else if
-		or highway=residential|service|unclassified|road|unknown|living_street|rest_area|services
+		or highway=residential|service|unclassified|road|living_street|rest_area|services
 		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 		or highway=track|path|crossing
 		highway=footway|steps|pedestrian|corridor|platform
@@ -136,16 +136,17 @@ assign footaccess
 ################################################################
 
 assign initialcost_waytype
-	if highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link then 100
+	if highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link then 80
 	else 25
 
-# getting on and off the bike is a fixed effort for each part of the way we need to walk
+
 assign initialcost
+	# getting on and off the bike is a fixed effort for each part of the way we need to walk
 	if and ( not bikeaccess ) footaccess then ( add initialcost_waytype 200 )
 	else initialcost_waytype
 
-#TODO
 assign turncost 50
+
 
 ################################################################
 #   Determine which roads can even be considered for routing   #
@@ -233,7 +234,6 @@ assign smoothness_cost
 			or highway=unclassified
 			or highway=crossing
 			or highway=road
-			or highway=unknown
 			or highway=rest_area
 			or highway=services 
 			highway=cycleway )
@@ -274,7 +274,7 @@ assign traffic_cost
 	else if not hascycleway then
 		if highway=trunk|trunk_link|primary|primary_link then traffic_tier4
 		else if highway=secondary|secondary_link|tertiary|tertiary_link then traffic_tier3
-		else if highway=residential|road|unknown|unclassified then traffic_tier2
+		else if highway=residential|road|unclassified then traffic_tier2
 		else 0.0
 	else if hascycleway then
 		if highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
