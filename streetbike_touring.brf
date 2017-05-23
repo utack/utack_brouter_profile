@@ -1,5 +1,6 @@
 ################################################################
 #          A BRouter profile suited for a streetbike           #
+#          Note: Right traffic countries only                  #
 ################################################################
 
 
@@ -380,6 +381,7 @@ assign footaccess_node
 	else if access=yes|permissive|destination|designated then true
 	else if access=private|no|agricultural then false
 	else true
+	
 
 
 ################################################################
@@ -387,9 +389,12 @@ assign footaccess_node
 ################################################################
 
 assign accesscost_node
-	if crossing=no then 10000
+	# crossing=no evaluation might miss some cases, but we are limited by brouter data here
+	if and crossing=no ( not highway=traffic_signals ) then 10000
+	# even if we can pass a barrier, we likely must slow down a bit
 	else if ( and bikeaccess_node ( not barrier= ) ) then 25
 	else if bikeaccess_node then 0
+	# get on and off the bike or at least drive very slowly
 	else if footaccess_node then 200
 	else 10000
 
@@ -407,7 +412,7 @@ assign nodecost =
 	else if ford=yes then 500
 	else if highway=steps then 200
 	#else if traffic_calming then 60
-	else if ( not crossing= ) then 50
+	else if and ( not crossing= ) ( not crossing=no ) then 50
 	else 0
 
 
