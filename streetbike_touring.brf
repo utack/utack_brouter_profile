@@ -17,8 +17,8 @@ assign uphillcost 60
 assign uphillcutoff 0.5
 assign downhillcutoff 2.0
 assign downhillcost 100
-assign elevationmaxbuffer 2
-assign elevationpenaltybuffer 5
+#assign elevationmaxbuffer 2
+#assign elevationpenaltybuffer 5
 
 
 
