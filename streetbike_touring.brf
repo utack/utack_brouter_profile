@@ -58,7 +58,6 @@ assign badoneway =
 	else true
 
 
-
 # Determine if there is a cycleway
 # Missing: oneway:right/left:oneway=no, we are limited by brouter data here
 assign hascycleway
@@ -254,33 +253,6 @@ assign smoothness_cost
 
 
 ################################################################
-#                 Inital and Turn Cost                         #
-################################################################
-
-assign initialcost_waytype
-	if highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link then 80
-	else 25
-
-
-assign initialcost
-	# getting on and off the bike is a fixed effort for each part of the way we need to walk
-	if and ( not bikeaccess ) footaccess then ( add initialcost_waytype 200 )
-	else initialcost_waytype
-
-assign turncost
-	# unfortunately footways are often drawn in odd shapes in OSM not representing how you really drive
-	if highway=footway then 0
-	# we are walking, no cost for turning
-	else if ( not bikeaccess ) then 0
-	# we are on a crappy way and slow
-	else if ( greater smoothness_cost smoothness_tier5 ) then 0
-	else if ( greater smoothness_cost smoothness_tier3 ) then 30
-	# we are on an ok way and probably fast enough that turning is annoying
-	else 60
-
-
-
-################################################################
 #                  Traffic Penalty                             #
 ################################################################
 
@@ -354,6 +326,32 @@ assign oneway_cost =
 		else if highway=tertiary|tertiary_link then 30
 	else 20.0   
 else 0.0 
+
+
+################################################################
+#                 Inital and Turn Cost                         #
+################################################################
+
+assign initialcost_waypreference
+	# ways with lots of traffic mean we have to be slow when going onto them
+	if greater traffic_cost traffic_tier2 then 100
+	else 25
+
+assign initialcost
+	# getting on and off the bike is a fixed effort for each part of the way we need to walk
+	if and ( not bikeaccess ) footaccess then ( add initialcost_waypreference 200 )
+	else initialcost_waypreference
+
+assign turncost
+	# unfortunately footways are often drawn in odd shapes in OSM not representing how you really drive
+	if highway=footway then 0
+	# we are walking, no cost for turning
+	else if ( not bikeaccess ) then 0
+	# we are on a crappy way and slow
+	else if ( greater smoothness_cost smoothness_tier5 ) then 10
+	else if ( greater smoothness_cost smoothness_tier3 ) then 30
+	# we are on an ok way and probably fast enough that turning is annoying
+	else 60
 
 
 ################################################################
