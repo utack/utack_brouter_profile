@@ -410,15 +410,15 @@ assign accesscost
 
 assign nodecost =
 	if highway=traffic_signals then 120
-	else if highway=stop|give_way  then 50
 	else if crossing=traffic_signals then 120
+	else if railway=signal then 150
 	else if railway=level_crossing then 80
 	else if railway=crossing then 80
-	else if railway=signal then 150
-	else if ford=yes then 500
 	else if highway=steps then 200
-	#else if traffic_calming then 60
-	else if and ( not crossing= ) ( not crossing=no ) then 50
+	else if highway=stop|give_way  then 25
+	else if highway=traffic_calming then 50
+	else if crossing=zebra then 50
+	else if ford=yes then 500
 	else 0
 
 
