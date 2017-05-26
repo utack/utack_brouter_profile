@@ -31,10 +31,10 @@ assign priorityclassifier = if highway= then 1 else 0
 
 # Determine if way is part of a cycleroute
 assign is_cycleroute
-	or route_bicycle_icn=yes
-	or route_bicycle_ncn=yes
 	or route_bicycle_rcn=yes
 	or route_bicycle_lcn=yes
+	or route_bicycle_icn=yes
+	or route_bicycle_ncn=yes
 	or lcn=proposed
 	or rcn=proposed
 	ncn=proposed
@@ -91,23 +91,23 @@ assign hascycleway
 # Value chances when going from way to way means initialcost is added
 assign initialclassifier
 	if hascycleway then 1
-	else if highway=cycleway then 1
-	else if highway=trunk then 2
-	else if highway=trunk_link then 3
-	else if highway=primary then 4
-	else if highway=primary_link then 5
-	else if highway=secondary then 6
-	else if highway=secondary_link then 7
-	else if highway=tertiary then 8
-	else if highway=tertiary_link then 9
 	else if highway=residential then 10
-	else if highway=living_street then 11
 	else if highway=service|rest_area|services then 12
 	else if highway=track|path then 13
 	else if highway=footway|pedestrian then 14
 	else if highway=road|unclassified then 15
-	else if highway=crossing then 16
+	else if highway=tertiary then 8
+	else if highway=secondary then 6
+	else if highway=primary then 4
+	else if highway=cycleway then 1
+	else if highway=living_street then 11
 	else if highway=steps then 17
+	else if highway=trunk then 2
+	else if highway=trunk_link then 3
+	else if highway=primary_link then 5
+	else if highway=secondary_link then 7
+	else if highway=tertiary_link then 9
+	else if highway=crossing then 16
 	else if highway=corridor then 18
 	else 19
 	
@@ -184,15 +184,14 @@ assign smoothness_cost
 		else if surface=paved then smoothness_tier1
 		else if surface=concrete then smoothness_tier1
 		else if surface=paving_stones then smoothness_tier1
-		else if surface=metal then 0.2
-		else if ( or surface=compacted surface=fine_gravel ) then smoothness_tier2
-		else if ( or surface=grass_paver surface=gravel ) then smoothness_tier3
-		else if ( or surface=unpaved surface=pebblestone ) then smoothness_tier3
-		else if ( or surface=sett surface=cobblestone ) then smoothness_tier5
-		else if ( or surface=grass surface=wood ) then smoothness_tier5
-		else if ( or surface=dirt or surface=earth surface=ground ) then smoothness_tier5
+		else if surface=compacted|fine_gravel|metal then smoothness_tier2
+		else if surface=grass_paver|gravel then smoothness_tier3
+		else if surface=unpaved|pebblestone then smoothness_tier3
+		else if surface=sett|cobblestone then smoothness_tier5
+		else if surface=grass|wood then smoothness_tier5
+		else if surface=dirt|earth|ground then smoothness_tier5
 		else if surface=mud then smoothness_tier6
-		else if ( or surface=clay surface=sand ) then 4.0
+		else if surface=clay|sand then 4.0
 		else smoothness_tier5
 	# tracktype classification allows to determine approximate smoothness too
 	else if ( not tracktype= ) then
@@ -220,14 +219,14 @@ assign smoothness_cost
 	else if ( not highway= ) then
 		# mostly asphalt expected here
 		if (
-			or highway=primary|primary_link
-			or highway=secondary|secondary_link
-			or highway=tertiary|tertiary_link
-			or highway=trunk|trunk_link
 			or highway=residential
-			or highway=living_street
 			or highway=service
 			or highway=unclassified
+			or highway=tertiary|tertiary_link
+			or highway=secondary|secondary_link
+			or highway=primary|primary_link
+			or highway=trunk|trunk_link
+			or highway=living_street
 			or highway=crossing
 			or highway=road
 			or highway=rest_area
@@ -236,7 +235,7 @@ assign smoothness_cost
 			then smoothness_tier0
 		# footways are expected to be ok
 		else if highway=footway|pedestrian|platform then smoothness_tier1
-		# probably not too bad smoothness with a dedicated bike
+		# probably not too bad smoothness when dedicated for bike
 		else if ( and highway=path|track bicycle=designated ) then smoothness_tier1
 		# path and track are assumed unpaved if not specified
 		else if highway=path|track then smoothness_tier3
@@ -415,11 +414,11 @@ assign node_cost =
 	else if railway=signal then 150
 	else if railway=level_crossing then 80
 	else if railway=crossing then 80
-	else if highway=steps then 200
 	else if highway=stop|give_way  then 25
 	else if highway=traffic_calming then 50
 	else if crossing=zebra then 50
 	else if ford=yes then 500
+	else if highway=steps then 200
 	else 0
 
 
