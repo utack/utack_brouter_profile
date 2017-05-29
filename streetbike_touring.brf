@@ -40,6 +40,7 @@ assign is_cycleroute
 	ncn=proposed
 
 # Determine if we are driving against a oneway
+# Missing: cycleway:right/left:oneway=no, we are limited by brouter data here
 assign badoneway =
 	if oneway:bicycle=no then false
 	else if reversedirection=yes then
@@ -170,11 +171,11 @@ assign smoothness_cost
 	# smoothnes value is the best option to determine smoothness
 	if ( not smoothness= ) then
 		if smoothness=excellent then -0.1
-		else if smoothness=good then smoothness_tier0
-		else if smoothness=intermediate then smoothness_tier1
-		else if smoothness=bad then smoothness_tier4
-		else if smoothness=very_bad then smoothness_tier6
-		else if smoothness=horrible then smoothness_tier7
+		else if smoothness=very_good|good then smoothness_tier0
+		else if smoothness=intermediate|medium then smoothness_tier1
+		else if smoothness=bad|robust_wheels|poor then smoothness_tier4
+		else if smoothness=very_bad|high_clearance|rough then smoothness_tier6
+		else if smoothness=horrible|off_road_wheels then smoothness_tier7
 		else if smoothness=very_horrible then 4.0
 		else if smoothness=impassable then 9.0
 		else smoothness_tier6
