@@ -211,7 +211,7 @@ assign smoothness_cost
 		if mtb:scale:uphill=0 then smoothness_tier6
 		else if mtb:scale:uphill=1 then smoothness_tier7
 		else 10000
-	else if ( not route_mtb_= ) then 10000
+	else if or ( not route_mtb_= ) route=mtb then 10000
 	# fallback to hiking route classification
 	else if ( not sac_scale= ) then
 		if sac_scale=hiking then smoothness_tier6  
@@ -307,7 +307,7 @@ assign maxspeed_cost if hascycleway then ( max 0.0 ( sub maxspeed_cost_raw speed
 
 
 ################################################################
-#         onewaycost, direct copy from poutnik profile         #
+#                          onewaycost                          #
 ################################################################
 
 assign oneway_cost =
