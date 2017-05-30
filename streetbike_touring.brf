@@ -259,13 +259,13 @@ assign traffic_cost
 		or ( and highway=footway|pedestrian ( not segregated=yes ) )
 		( highway=platform|corridor )
 		then traffic_tier1
+	# anything without motor vehicles is fine
+	else if motor_vehicle=no|private|agricultural|emergency then 0.0
 	# 3+ lanes = lots of expected traffic
 	else if and ( and oneway=yes|1|-1 lanes=3|4|5|6|7 ) ( not hascycleway ) then traffic_tier4
 	else if and lanes=5|6|7  ( not hascycleway ) then traffic_tier4
 	# a way specifically designed for bikes probably has no traffic
 	else if ( and bicycle=designated ( not segregated=no ) ) then 0.0
-	# anything without motor vehicles is fine
-	else if motor_vehicle=no|private|agricultural|emergency then 0.0
 	# wild traffic guesses based on roadtype only
 	else if not hascycleway then
 		if highway=trunk|trunk_link|primary|primary_link then traffic_tier4
