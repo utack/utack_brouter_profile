@@ -65,12 +65,13 @@ assign bike_direction_relative
 	else 1
 
 # bike direction, relative to the OSM way direction
-# -1 means against, 0 means both simultaneously, 1 means with, 2 means reversible
+# -1 means against, 0 means both simultaneously, 1 means with
 assign bike_direction_global
 	if oneway:bicycle=no then 0
 	else if oneway:bicycle=yes then 1
 	# we must go with the motor traffic
 	else if ( equal bike_direction_relative 1 ) then traffic_direction_global
+	# when relative bike direction is against the motorcar traffic, we can go in both directions as cyclist
 	else 0
 
 assign badoneway =
