@@ -125,7 +125,8 @@ assign bikeaccess
 		or highway=residential|service|unclassified|road|living_street|rest_area|services
 		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 		or highway=track|path|cycleway|crossing
-		( and highway=steps ramp:bicycle=yes )
+		or ( and highway=steps ramp:bicycle=yes )
+		( and highway=footway|pedestrian is_cycleroute )
 		then true
 	else false
 
@@ -151,7 +152,7 @@ assign footaccess
 
 assign access_cost
 	if bikeaccess then 0
-	else if footaccess then 15
+	else if footaccess then 9
 	else 10000
 
 ################################################################
@@ -328,7 +329,7 @@ assign initialcost_waypreference
 
 assign initialcost
 	# getting on and off the bike is a fixed effort for each part of the way we need to walk
-	if and ( not bikeaccess ) footaccess then ( add initialcost_waypreference 200 )
+	if and ( not bikeaccess ) footaccess then ( add initialcost_waypreference 400 )
 	else initialcost_waypreference
 
 assign turncost
@@ -401,7 +402,7 @@ assign access_cost
 	# even if we can pass a barrier, we likely must slow down a bit
 	else if ( and bikeaccess ( not barrier= ) ) then 25
 	else if bikeaccess then 0
-	else if footaccess then 200
+	else if footaccess then 400
 	else 10000
 
 
