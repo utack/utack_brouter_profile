@@ -72,13 +72,14 @@ assign bike_direction_global
 	if oneway:bicycle=no then 0
 	else if oneway:bicycle=yes then 1
 	else if ( equal bike_direction_relative 2 ) then 2
-	else multiply bike_direction_relative traffic_direction_global
+	# we must go with the motor traffic
+	else if ( equal bike_direction_relative 1 ) then traffic_direction_global
+	else 0
 
 assign badoneway =
 	if ( equal bike_direction_global 0 ) then false
 	else if ( equal bike_direction_global 2 ) then true
-	# we can go with either motor traffic or bike traffic
-	else multiply ( xor ( equal traffic_direction_global 1 ) ( not reversedirection=yes ) ) ( xor ( equal bike_direction_global 1 ) ( not reversedirection=yes ) )
+	else ( xor ( equal bike_direction_global 1 ) ( not reversedirection=yes ) )
 
 
 # Determine if there is a cycleway
