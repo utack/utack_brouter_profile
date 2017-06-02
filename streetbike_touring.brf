@@ -62,8 +62,6 @@ assign bike_direction_relative
 	if or oneway:bicycle=opposite bicycle=opposite then -1
 	else if and ( or cycleway:left=opposite|opposite_lane|opposite_track cycleway:right=opposite|opposite_lane|opposite_track ) ( or ( and ( not cycleway= ) ( not cycleway=no|opposite|opposite_lane|opposite_track|none|proposed ) ) or ( and ( not cycleway:right= ) ( not cycleway:right=opposite_lane|sidepath|no|opposite_track|opposite ) ) ( and ( not cycleway:left= ) ( not cycleway:left=opposite_lane|sidepath|no|opposite_track|opposite ) ) ) then 0
 	else if ( or cycleway=opposite|opposite_lane|opposite|track or cycleway:left=opposite|opposite_lane|opposite_track cycleway:right=opposite|opposite_lane|opposite_track ) then -1
-	# no explicit bike traffic information given
-	else if ( equal traffic_direction_global 0 ) then 0
 	else 1
 
 # bike direction, relative to the OSM way direction
