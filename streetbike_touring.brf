@@ -273,6 +273,7 @@ assign smoothness_cost
 			or highway=tertiary|tertiary_link
 			or highway=secondary|secondary_link
 			or highway=primary|primary_link
+			or highway=motorway|motorway_link
 			or highway=trunk|trunk_link
 			or highway=living_street
 			or highway=crossing
