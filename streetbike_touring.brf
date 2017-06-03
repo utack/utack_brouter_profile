@@ -51,7 +51,7 @@ assign traffic_direction_global
 		else if oneway=reversible then 2
 		else 1
 	# motorways imply oneway, according to wiki
-	if highway=motorway|motorway_link then
+	else if highway=motorway|motorway_link then
 		if oneway=-1 then -1
 		else if oneway=reversible then 2
 		else 1
