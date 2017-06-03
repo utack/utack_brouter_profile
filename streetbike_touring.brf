@@ -42,9 +42,10 @@ assign is_cycleroute
 
 # Determine if we are driving against a oneway
 # Missing: cycleway:right/left:oneway=no, we are limited by brouter data here
-# Determine motor traffic flow direction
+# Step1: Determine motor traffic flow direction
 # -1 means against OSM way direction, 0 means not a oneway, 1 means in OSM way direction, 2 means reversible
 assign traffic_direction_global
+	# roundabouts imply oneway, according to wiki
 	if junction=roundabout then
 		if oneway=-1 then -1
 		else if oneway=reversible then 2
@@ -55,28 +56,35 @@ assign traffic_direction_global
 		else if oneway=reversible then 2
 		else 0
 	else 0
-
-# bike direction relative to motor traffic
+# Step2: determine bike direction relative to motor traffic
 # -1 means against, 0 means both simultaneously, 1 means with
 assign bike_direction_relative
+	# this seems to be a rare tagging problem, actually oneway should always refer to OSM way direction, not traffic direction
 	if or oneway:bicycle=opposite bicycle=opposite then -1
+	# we check for simultaneously a bike way opposite and one in traffic direction
 	else if and ( or cycleway:left=opposite|opposite_lane|opposite_track cycleway:right=opposite|opposite_lane|opposite_track ) ( or ( and ( not cycleway= ) ( not cycleway=no|opposite|opposite_lane|opposite_track|none|proposed ) ) or ( and ( not cycleway:right= ) ( not cycleway:right=opposite_lane|sidepath|no|opposite_track|opposite ) ) ( and ( not cycleway:left= ) ( not cycleway:left=opposite_lane|sidepath|no|opposite_track|opposite ) ) ) then 0
+	# there is a bike lane that allows us to cycle against oneway traffic
 	else if ( or cycleway=opposite|opposite_lane|opposite|track or cycleway:left=opposite|opposite_lane|opposite_track cycleway:right=opposite|opposite_lane|opposite_track ) then -1
+	# no specific information about cycling direction, we have to go with the motor traffic
 	else 1
-
-# bike direction, relative to the OSM way direction
+# Step3: determine bike direction, relative to the OSM way direction
 # -1 means against, 0 means both simultaneously, 1 means with
 assign bike_direction_global
+	# oneway:bicycle refers to the OSM way direction
 	if oneway:bicycle=no then 0
 	else if oneway:bicycle=yes then 1
 	# we must go with the motor traffic
 	else if ( equal bike_direction_relative 1 ) then traffic_direction_global
-	# when relative bike direction is against the motorcar traffic, we can go in both directions as cyclist
+	# 1st leftover case: relative bike direction is against the motorcar traffic, we can go in both directions as cyclist
+	# 2nd leftover case: bikes can go in both directions anyways
 	else 0
-
+# Step4: use allowed bike directions and BRouter reversedirection to determine if we are going against a oneway
 assign badoneway =
+	# we can go either direction as cyclist, oneway is irrelevant
 	if ( equal bike_direction_global 0 ) then false
+	# bike direction is reversible, we are careful and avoid these ways
 	else if ( equal bike_direction_global 2 ) then true
+	# rest of the cases, compare bike direction to the brouter reversedirection value and see if we can use the way
 	else ( xor ( equal bike_direction_global 1 ) ( not reversedirection=yes ) )
 
 
