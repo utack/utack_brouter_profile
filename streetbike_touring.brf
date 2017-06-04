@@ -399,13 +399,13 @@ assign turncost
 
 # We go 20% extra way, if it means we are on a cycleroute
 assign cycleroute_cost
-	if class:bicycle=-3 then 3.0
+	if class:bicycle= then if is_cycleroute then 0.0 else 0.2
+    else if class:bicycle=-3 then 3.0
 	else if class:bicycle=-2 then 1.0
 	else if class:bicycle=-1 then 0.4
 	else if class:bicycle=3 then -0.4
 	else if class:bicycle=2 then -0.2
 	else if class:bicycle=1 then 0.0
-	else if ( not is_cycleroute ) then 0.2
 	else 0.0
 
 
