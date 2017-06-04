@@ -226,7 +226,15 @@ assign smoothness_cost
 		else if smoothness=very_horrible then 4.0
 		else if smoothness=impassable then 9.0
 		else smoothness_tier6
-	# if smoothness is not given, the surface is great indicator for smoothness
+	# tracktype classification allows to determine approximate smoothness too
+	else if ( not tracktype= ) then
+		if tracktype=grade1 then smoothness_tier1
+		else if tracktype=grade2 then smoothness_tier2
+		else if tracktype=grade3 then smoothness_tier3
+		else if tracktype=grade4 then smoothness_tier5
+		else if tracktype=grade5 then smoothness_tier6
+		else smoothness_tier7
+	# the surface is great indicator for smoothness
 	else if ( not surface= ) then
 		if surface=asphalt then smoothness_tier0
 		else if surface=paved then smoothness_tier1
@@ -241,14 +249,6 @@ assign smoothness_cost
 		else if surface=mud then smoothness_tier6
 		else if surface=clay|sand then 4.0
 		else smoothness_tier5
-	# tracktype classification allows to determine approximate smoothness too
-	else if ( not tracktype= ) then
-		if tracktype=grade1 then smoothness_tier1
-		else if tracktype=grade2 then smoothness_tier2
-		else if tracktype=grade3 then smoothness_tier3
-		else if tracktype=grade4 then smoothness_tier5
-		else if tracktype=grade5 then smoothness_tier6
-		else smoothness_tier7
 	# fallback to mountainbike scale
 	else if ( not mtb:scale= ) then
 		if mtb:scale=0 then smoothness_tier6
@@ -301,7 +301,7 @@ assign traffic_tier2 0.2
 assign traffic_tier3 0.3
 assign traffic_tier4 0.5
 
-assign traffic_cost 
+assign traffic_cost
 	# many pedestrians but no cars expected
 	if	or ( and foot=designated ( not segregated=yes ) )
 		or ( and highway=footway|pedestrian ( not segregated=yes ) )
@@ -321,9 +321,11 @@ assign traffic_cost
 		else if highway=residential|road|unclassified then traffic_tier2
 		else 0.0
 	else if hascycleway then
-		if highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
+		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
+		else if highway=tertiary|tertiary_link then traffic_tier1
 		else 0.0
 	else 0.0
+
 
 
 ################################################################
