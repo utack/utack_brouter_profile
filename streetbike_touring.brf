@@ -18,6 +18,25 @@ assign uphillcutoff 0.5
 assign downhillcutoff 2.0
 assign downhillcost 100
 
+assign smoothness_tier0 0.0
+assign smoothness_tier1 0.1
+assign smoothness_tier2 0.3
+assign smoothness_tier3 0.4
+assign smoothness_tier4 0.6
+assign smoothness_tier5 1.0
+assign smoothness_tier6 1.5
+assign smoothness_tier7 3.0
+
+assign traffic_tier1 0.1
+assign traffic_tier2 0.2
+assign traffic_tier3 0.3
+assign traffic_tier4 0.5
+
+assign speed_tier1 0.2
+assign speed_tier2 0.3
+assign speed_tier3 0.4
+assign speed_tier4 0.6
+
 
 
 ---context:way
@@ -212,14 +231,6 @@ assign access_cost
 #                     Determine smoothness                     #
 ################################################################
 
-assign smoothness_tier0 0.0
-assign smoothness_tier1 0.1
-assign smoothness_tier2 0.3
-assign smoothness_tier3 0.4
-assign smoothness_tier4 0.6
-assign smoothness_tier5 1.0
-assign smoothness_tier6 1.5
-assign smoothness_tier7 3.0
 
 assign smoothness_cost
 	# smoothnes value is the best option to determine smoothness
@@ -303,10 +314,6 @@ assign smoothness_cost
 #                       Traffic Penalty                        #
 ################################################################
 
-assign traffic_tier1 0.1
-assign traffic_tier2 0.2
-assign traffic_tier3 0.3
-assign traffic_tier4 0.5
 
 assign traffic_cost
 	# many pedestrians but no cars expected
@@ -317,8 +324,8 @@ assign traffic_cost
 	# anything without motor vehicles is fine
 	else if motor_vehicle=no|private|agricultural|emergency then 0.0
 	# 3+ lanes = lots of expected traffic
-	else if ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) then traffic_tier4
-	else if lanes=5|6|7 then traffic_tier4
+	else if and ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) ( not hascycleway ) then traffic_tier4
+	else if and lanes=5|6|7  ( not hascycleway ) then traffic_tier4
 	# a way specifically designed for bikes probably has no traffic
 	else if ( and bicycle=designated ( not segregated=no ) ) then 0.0
 	# wild traffic guesses based on roadtype only
@@ -328,7 +335,9 @@ assign traffic_cost
 		else if highway=residential|road|unclassified then traffic_tier2
 		else 0.0
 	else if hascycleway then
-		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
+		if lanes=5|6|7 then traffic_tier2
+		else if ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) then traffic_tier2
+		else if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
 		else if highway=tertiary|tertiary_link then traffic_tier1
 		else 0.0
 	else 0.0
@@ -339,10 +348,6 @@ assign traffic_cost
 #                       Maxspeed Penalty                       #
 ################################################################
 
-assign speed_tier1 0.2
-assign speed_tier2 0.3
-assign speed_tier3 0.4
-assign speed_tier4 0.6
 
 assign maxspeed_cost_raw
 	if ( not maxspeed= ) then
