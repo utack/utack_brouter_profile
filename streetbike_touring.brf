@@ -54,16 +54,9 @@ assign is_cycleroute
 	or route_bicycle_lcn=yes
 	or route_bicycle_icn=yes
 	or route_bicycle_ncn=yes
-	or route_bicycle_rcn=proposed
-	or route_bicycle_lcn=proposed
-	or route_bicycle_icn=proposed
-	or route_bicycle_ncn=proposed
 	or lcn=yes
 	or rcn=yes
-	or ncn=yes
-	or lcn=proposed
-	or rcn=proposed
-	ncn=proposed
+	ncn=yes
 
 
 # Determine if we are driving against a oneway
@@ -335,8 +328,8 @@ assign traffic_cost
 		else if highway=residential|road|unclassified then traffic_tier2
 		else 0.0
 	else if hascycleway then
-		if lanes=5|6|7 then traffic_tier2
-		else if ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) then traffic_tier2
+		if ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) then traffic_tier2
+		else if lanes=5|6|7 then traffic_tier2
 		else if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
 		else if highway=tertiary|tertiary_link then traffic_tier1
 		else 0.0
