@@ -296,9 +296,9 @@ assign smoothness_cost
 		# footways are expected to be ok
 		else if highway=footway|pedestrian|platform then smoothness_tier1
 		# probably not too bad smoothness when dedicated for bike
-		else if ( and highway=path|track bicycle=designated ) then smoothness_tier1
+		else if bicycle=designated then smoothness_tier2
 		# path and track are assumed unpaved if not specified
-		else if highway=path|track then smoothness_tier3
+		else if highway=path|track then smoothness_tier4
 		else smoothness_tier5
 	else 10000
 
