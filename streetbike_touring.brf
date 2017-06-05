@@ -150,7 +150,7 @@ assign hascycleway
 
 # Determine if we have access
 assign bikeaccess
-	if ( not highway= ) then
+	if ( not route=ferry ) then
 		if bicycle=yes|designated|permissive|destination|mtb then true
 		else if bicycle=no|dismount|private|use_sidepath then false
 		else if vehicle=yes|destination|permissive|designated then true
@@ -169,7 +169,7 @@ assign bikeaccess
 	else false
 
 assign footaccess
-	if ( not highway= ) then
+	if ( not route=ferry ) then
 		if foot=yes|designated|permissive|destination then true
 		else if foot=no|private|use_sidepath then false
 		else if bicycle=dismount then true
