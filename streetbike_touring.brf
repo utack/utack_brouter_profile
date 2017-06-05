@@ -225,7 +225,7 @@ assign access_cost
 ################################################################
 
 
-assign smoothness_cost
+assign smoothness_cost_raw
 	# smoothnes value is the best option to determine smoothness
 	if ( not smoothness= ) then
 		if smoothness=excellent then -0.1
@@ -237,16 +237,20 @@ assign smoothness_cost
 		else if smoothness=very_horrible then 4.0
 		else if smoothness=impassable then 9.0
 		else smoothness_tier6
+	else -1
+assign tracktype_cost_raw
 	# tracktype classification allows to determine approximate smoothness too
-	else if ( not tracktype= ) then
+	if ( not tracktype= ) then
 		if tracktype=grade1 then smoothness_tier1
 		else if tracktype=grade2 then smoothness_tier2
 		else if tracktype=grade3 then smoothness_tier3
 		else if tracktype=grade4 then smoothness_tier5
 		else if tracktype=grade5 then smoothness_tier6
 		else smoothness_tier7
+	else -1
+assign surface_cost_raw
 	# the surface is great indicator for smoothness
-	else if ( not surface= ) then
+	if ( not surface= ) then
 		if surface=asphalt then smoothness_tier0
 		else if surface=paved then smoothness_tier1
 		else if surface=concrete then smoothness_tier1
@@ -260,8 +264,10 @@ assign smoothness_cost
 		else if surface=mud then smoothness_tier6
 		else if surface=clay|sand then 4.0
 		else smoothness_tier5
+	else -1
+assign mtb_cost_raw
 	# fallback to mountainbike scale
-	else if ( not mtb:scale= ) then
+	if ( not mtb:scale= ) then
 		if mtb:scale=0 then smoothness_tier6
 		else if mtb:scale=1 then smoothness_tier7
 		else 10000
@@ -270,37 +276,42 @@ assign smoothness_cost
 		else if mtb:scale:uphill=1 then smoothness_tier7
 		else 10000
 	else if or ( not route_mtb_= ) route=mtb then 10000
+	else -1
+assign hike_cost_raw
 	# fallback to hiking route classification
-	else if ( not sac_scale= ) then
+	if ( not sac_scale= ) then
 		if sac_scale=hiking then smoothness_tier6  
 		else 10000
+	else -1
+	
+assign smoothness_max_cost_raw max smoothness_cost_raw max tracktype_cost_raw max surface_cost_raw max mtb_cost_raw hike_cost_raw
+
+assign smoothness_cost
+	if greater smoothness_max_cost_raw -1 then smoothness_max_cost_raw
 	# finally fallback to make rough assumptions based on waytype
-	else if ( not highway= ) then
-		# mostly asphalt expected here
-		if (
-			or highway=residential
-			or highway=service
-			or highway=unclassified
-			or highway=tertiary|tertiary_link
-			or highway=secondary|secondary_link
-			or highway=primary|primary_link
-			or highway=motorway|motorway_link
-			or highway=trunk|trunk_link
-			or highway=living_street
-			or highway=crossing
-			or highway=road
-			or highway=rest_area
-			or highway=services 
-			highway=cycleway )
-			then smoothness_tier0
-		# footways are expected to be ok
-		else if highway=footway|pedestrian|platform then smoothness_tier1
-		# probably not too bad smoothness when dedicated for bike
-		else if bicycle=designated then smoothness_tier2
-		# path and track are assumed unpaved if not specified
-		else if highway=path|track then smoothness_tier4
-		else smoothness_tier5
-	else 10000
+	else if (
+		or highway=residential
+		or highway=service
+		or highway=unclassified
+		or highway=tertiary|tertiary_link
+		or highway=secondary|secondary_link
+		or highway=primary|primary_link
+		or highway=motorway|motorway_link
+		or highway=trunk|trunk_link
+		or highway=living_street
+		or highway=crossing
+		or highway=road
+		or highway=rest_area
+		or highway=services 
+		highway=cycleway )
+		then smoothness_tier0
+	# footways are expected to be ok
+	else if highway=footway|pedestrian|platform then smoothness_tier1
+	# probably not too bad smoothness when dedicated for bike
+	else if bicycle=designated then smoothness_tier2
+	# path and track are assumed unpaved if not specified
+	else if highway=path|track then smoothness_tier4
+	else smoothness_tier5
 
 
 ################################################################
