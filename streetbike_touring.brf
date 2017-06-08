@@ -8,7 +8,7 @@
 ---context:global
 
 assign turnInstructionMode 0
-#assign validForBikes 1
+assign validForBikes 1
 assign pass1coefficient 1
 assign pass2coefficient -1
 assign considerTurnRestrictions true
