@@ -8,7 +8,7 @@
 ---context:global
 
 assign turnInstructionMode 0
-assign validForBikes 1
+#assign validForBikes 1
 assign pass1coefficient 1
 assign pass2coefficient -1
 assign considerTurnRestrictions true
@@ -291,8 +291,11 @@ assign hike_cost_raw
 assign smoothness_max_cost_raw max smoothness_cost_raw max tracktype_cost_raw max surface_cost_raw max mtb_cost_raw hike_cost_raw
 
 assign smoothness_cost
-	if greater smoothness_max_cost_raw -1 then smoothness_max_cost_raw
-	# finally fallback to make rough assumptions based on waytype
+	# we make an exception for excellent smoothness
+	if equal smoothness_cost_raw -0.1 then smoothness_cost_raw
+	# we have a good idea about smoothness from one of the above tags
+	else if greater smoothness_max_cost_raw -1 then smoothness_max_cost_raw
+	# no good indication of smoothness, fallback to make rough assumptions based on waytype
 	else if (
 		or highway=residential
 		or highway=service
@@ -325,6 +328,7 @@ assign smoothness_cost
 
 assign traffic_cost
 	# many pedestrians but no cars expected
+	# todo: cycleway=sidewalk
 	if	or ( and foot=designated ( not segregated=yes ) )
 		or ( and highway=footway|pedestrian ( not segregated=yes ) )
 		( highway=platform|corridor )
