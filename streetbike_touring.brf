@@ -162,7 +162,6 @@ assign bikeaccess
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
 			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 			or highway=track|path|cycleway|crossing
-			or ( and highway=steps ramp:bicycle=yes )
 			( and highway=footway|pedestrian is_cycleroute )
 			then true
 		else false
