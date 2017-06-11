@@ -296,21 +296,25 @@ assign smoothness_cost
 	# we have a good idea about smoothness from one of the above tags
 	else if greater smoothness_max_cost_raw -1 then smoothness_max_cost_raw
 	# no good indication of smoothness, fallback to make rough assumptions based on waytype
+	# waytypes that are likely in good condition, but add a little cost for unknown condition
 	else if (
 		or highway=residential
 		or highway=service
 		or highway=unclassified
-		or highway=tertiary|tertiary_link
-		or highway=secondary|secondary_link
-		or highway=primary|primary_link
-		or highway=motorway|motorway_link
-		or highway=trunk|trunk_link
 		or highway=living_street
 		or highway=crossing
 		or highway=road
 		or highway=rest_area
 		or highway=services 
 		highway=cycleway )
+		then 0.05
+	# waytypes that are almost certainly in good condition
+	else if (
+		or highway=tertiary|tertiary_link
+		or highway=secondary|secondary_link
+		or highway=primary|primary_link
+		or highway=motorway|motorway_link
+		highway=trunk|trunk_link )
 		then smoothness_tier0
 	# footways are expected to be ok
 	else if highway=footway|pedestrian|platform then smoothness_tier1
