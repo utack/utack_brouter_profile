@@ -29,7 +29,7 @@ assign smoothness_tier7 3.0
 
 assign traffic_tier1 0.1
 assign traffic_tier2 0.2
-assign traffic_tier3 0.3
+assign traffic_tier3 0.4
 assign traffic_tier4 0.5
 
 assign speed_tier1 0.2
