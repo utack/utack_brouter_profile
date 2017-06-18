@@ -265,7 +265,7 @@ assign surface_cost_raw
 		else if surface=grass|wood then smoothness_tier5
 		else if surface=dirt|earth|ground then smoothness_tier5
 		else if surface=mud then smoothness_tier6
-		else if surface=clay|sand then 4.0
+		else if surface=clay|sand then 6.0
 		else smoothness_tier5
 	else -1
 assign mtb_cost_raw
@@ -347,7 +347,8 @@ assign traffic_cost
 	else if not hascycleway then
 		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link then traffic_tier4
 		else if highway=secondary|secondary_link|tertiary|tertiary_link then traffic_tier3
-		else if highway=residential|road|unclassified then traffic_tier2
+		else if highway=residential then traffic_tier2
+		else if highway=road|unclassified then traffic_tier1
 		else 0.0
 	else if hascycleway then
 		if ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) then traffic_tier2
