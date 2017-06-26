@@ -296,7 +296,7 @@ assign smoothness_cost
 	else if greater smoothness_max_cost_raw -1 then smoothness_max_cost_raw
 	# no good indication of smoothness, fallback to make rough assumptions based on waytype
 	# waytypes that are likely in good condition, but add a little cost for unknown condition
-	else if (
+	else if and ( not is_cycleroute ) (
 		or highway=residential
 		or highway=service
 		or highway=unclassified
@@ -308,6 +308,17 @@ assign smoothness_cost
 		highway=cycleway )
 		then 0.05
 	# waytypes that are almost certainly in good condition
+	else if and is_cycleroute (
+		or highway=residential
+		or highway=service
+		or highway=unclassified
+		or highway=living_street
+		or highway=crossing
+		or highway=road
+		or highway=rest_area
+		or highway=services 
+		highway=cycleway )
+		then smoothness_tier0
 	else if (
 		or highway=tertiary|tertiary_link
 		or highway=secondary|secondary_link
