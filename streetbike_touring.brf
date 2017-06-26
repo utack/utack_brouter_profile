@@ -306,7 +306,7 @@ assign smoothness_cost
 		or highway=rest_area
 		or highway=services 
 		highway=cycleway )
-		then 0.05
+		then smoothness_tier1
 	# waytypes that are almost certainly in good condition
 	else if and is_cycleroute (
 		or highway=residential
