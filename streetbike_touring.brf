@@ -263,7 +263,10 @@ assign surface_cost_raw
 		else if surface=pebblestone then smoothness_tier3
 		else if surface=sett|cobblestone then smoothness_tier5
 		else if surface=grass|wood then smoothness_tier5
-		else if surface=unpaved|dirt|earth|ground then smoothness_tier5
+		# unpaved is very generic, we like to avoid it to judge if tracktype or smoothness are given
+		else if and ( and tracktype= smoothness= ) surface=unpaved then smoothness_tier5
+		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=unpaved then -1.0
+		else if surface=dirt|earth|ground then smoothness_tier5
 		else if surface=mud then smoothness_tier6
 		else if surface=clay|sand then 6.0
 		else smoothness_tier5
