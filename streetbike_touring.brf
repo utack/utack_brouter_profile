@@ -149,41 +149,44 @@ assign hascycleway
 	else false
 
 # Determine if we have access
+
 assign bikeaccess
-	if ( not route=ferry ) then
-		if bicycle=yes|designated|permissive|destination|mtb then true
-		else if bicycle=no|dismount|private|use_sidepath then false
-		else if vehicle=yes|destination|permissive|designated then true
-		else if vehicle=no|agricultural|private then false
-		else if access=yes|permissive|destination|designated then true
-		else if access=private|no|agricultural|customers|delivery then false
-		# no explicit access rules, make assumptions based on waytype
-		else if
-			or highway=residential|service|unclassified|road|living_street|rest_area|services
-			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-			or highway=track|path|cycleway|crossing
-			( and highway=footway|pedestrian is_cycleroute )
-			then true
-		else false
+	if bicycle=yes|designated|permissive|destination|mtb then true
+	else if bicycle=no|dismount|private|use_sidepath then false
+	else if vehicle=yes|destination|permissive|designated then true
+	else if vehicle=no|agricultural|private then false
+	else if access=yes|permissive|destination|designated then true
+	else if access=private|no|agricultural|customers|delivery then false
+	# no explicit access rules, make assumptions based on waytype
+	else if
+		or highway=residential|service|unclassified|road|living_street|rest_area|services
+		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
+		or highway=track|path|cycleway|crossing
+		( and highway=footway|pedestrian is_cycleroute )
+		then true
 	else false
 
 assign footaccess
-	if ( not route=ferry ) then
-		if foot=yes|designated|permissive|destination then true
-		else if foot=no|private|use_sidepath then false
-		else if bicycle=dismount then true
-		else if access=yes|permissive|destination|designated then true
-		else if access=private|no|agricultural|customers|delivery then false
-		# no explicit access rules, make assumptions based on waytype
-		else if
-			or highway=residential|service|unclassified|road|living_street|rest_area|services
-			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-			or highway=track|path|crossing
-			highway=footway|steps|pedestrian|corridor|platform
-			then true
-		else false
+	if foot=yes|designated|permissive|destination then true
+	else if foot=no|private|use_sidepath then false
+	else if bicycle=dismount then true
+	else if access=yes|permissive|destination|designated then true
+	else if access=private|no|agricultural|customers|delivery then false
+	# no explicit access rules, make assumptions based on waytype
+	else if
+		or highway=residential|service|unclassified|road|living_street|rest_area|services
+		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
+		or highway=track|path|crossing
+		highway=footway|steps|pedestrian|corridor|platform
+		then true
 	else false
 
+assign otheraccess
+	if and route=ferry ( not bicycle=no|private ) then true
+	else if and highway= bicycle=yes|designated|permissive|destination|mtb then true
+	else if and highway= vehicle=yes|destination|permissive|designated then true
+	else if and highway= access=yes|permissive|destination|designated then true
+	else false
 
 # Needed to trigger initialcost, any fantasy value works as long as they differ for waytypes
 # Value chances when going from way to way means initialcost is added
@@ -219,7 +222,8 @@ assign initialclassifier
 ################################################################
 
 assign access_cost
-	if bikeaccess then 0
+	if otheraccess then 1
+	else if bikeaccess then 0
 	else if footaccess then 9
 	else 10000
 
@@ -418,8 +422,9 @@ assign initialcost_waypreference
 	else 25
 
 assign initialcost
+	if otheraccess then 25000
 	# getting on and off the bike is a fixed effort for each part of the way we need to walk
-	if and ( not bikeaccess ) footaccess then ( add initialcost_waypreference 400 )
+	else if and ( not bikeaccess ) footaccess then ( add initialcost_waypreference 400 )
 	else initialcost_waypreference
 
 assign turncost
@@ -492,6 +497,7 @@ assign access_cost
 	# even if we can pass a barrier, we likely must slow down a bit
 	else if ( and bikeaccess ( not barrier= ) ) then 25
 	else if bikeaccess then 0
+	# getting on and off the bike is a fixed cost
 	else if footaccess then 400
 	else 10000
 
