@@ -419,7 +419,7 @@ assign initialcost_waypreference
 	else 25
 
 assign initialcost
-	if ferryaccess then 25000
+	if ferryaccess then 30000
 	# getting on and off the bike is a fixed effort for each part of the way we need to walk
 	else if and ( not bikeaccess ) footaccess then ( add initialcost_waypreference 400 )
 	else initialcost_waypreference
