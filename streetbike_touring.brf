@@ -222,7 +222,7 @@ assign initialclassifier
 ################################################################
 
 assign access_cost
-	if otheraccess then 1
+	if otheraccess then 2
 	else if bikeaccess then 0
 	else if footaccess then 9
 	else 10000
@@ -459,7 +459,9 @@ assign cycleroute_cost
 #               Final Way Costfactor Calculation               #
 ################################################################
 
-assign costfactor max ( add 1.0 add access_cost add smoothness_cost add traffic_cost add maxspeed_cost add oneway_cost cycleroute_cost ) 1.0
+assign costfactor
+	if otheraccess then access_cost
+	else max ( add 1.0 add access_cost add smoothness_cost add traffic_cost add maxspeed_cost add oneway_cost cycleroute_cost ) 1.0
 
 
 
