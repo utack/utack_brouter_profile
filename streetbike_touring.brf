@@ -6,6 +6,8 @@
 
 
 ---context:global
+# switch to choose if ferries are considered in routing
+assign consider_ferries true
 
 assign turnInstructionMode 0
 assign validForBikes 1
@@ -150,38 +152,42 @@ assign hascycleway
 
 # Determine if we have access
 assign bikeaccess
-	if bicycle=yes|designated|permissive|destination|mtb then true
-	else if bicycle=no|dismount|private|use_sidepath then false
-	else if vehicle=yes|destination|permissive|designated then true
-	else if vehicle=no|agricultural|private then false
-	else if access=yes|permissive|destination|designated then true
-	else if access=private|no|agricultural|customers|delivery then false
-	# no explicit access rules, make assumptions based on waytype
-	else if
-		or highway=residential|service|unclassified|road|living_street|rest_area|services
-		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-		or highway=track|path|cycleway|crossing
-		( and highway=footway|pedestrian is_cycleroute )
-		then true
+	if ( not route=ferry ) then
+		if bicycle=yes|designated|permissive|destination|mtb then true
+		else if bicycle=no|dismount|private|use_sidepath then false
+		else if vehicle=yes|destination|permissive|designated then true
+		else if vehicle=no|agricultural|private then false
+		else if access=yes|permissive|destination|designated then true
+		else if access=private|no|agricultural|customers|delivery then false
+		# no explicit access rules, make assumptions based on waytype
+		else if
+			or highway=residential|service|unclassified|road|living_street|rest_area|services
+			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
+			or highway=track|path|cycleway|crossing
+			( and highway=footway|pedestrian is_cycleroute )
+			then true
+		else false
 	else false
 
 assign footaccess
-	if foot=yes|designated|permissive|destination then true
-	else if foot=no|private|use_sidepath then false
-	else if bicycle=dismount then true
-	else if access=yes|permissive|destination|designated then true
-	else if access=private|no|agricultural|customers|delivery then false
-	# no explicit access rules, make assumptions based on waytype
-	else if
-		or highway=residential|service|unclassified|road|living_street|rest_area|services
-		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-		or highway=track|path|crossing
-		highway=footway|steps|pedestrian|corridor|platform
-		then true
+	if ( not route=ferry ) then
+		if foot=yes|designated|permissive|destination then true
+		else if foot=no|private|use_sidepath then false
+		else if bicycle=dismount then true
+		else if access=yes|permissive|destination|designated then true
+		else if access=private|no|agricultural|customers|delivery then false
+		# no explicit access rules, make assumptions based on waytype
+		else if
+			or highway=residential|service|unclassified|road|living_street|rest_area|services
+			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
+			or highway=track|path|crossing
+			highway=footway|steps|pedestrian|corridor|platform
+			then true
+		else false
 	else false
 
 assign ferryaccess
-	if and route=ferry ( not bicycle=no|private ) then true
+	if and route=ferry and ( not bicycle=no|private ) consider_ferries then true
 	else false
 
 # Needed to trigger initialcost, any fantasy value works as long as they differ for waytypes
