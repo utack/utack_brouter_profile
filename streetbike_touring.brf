@@ -149,6 +149,7 @@ assign hascycleway
 	else false
 
 # Determine if we have access
+
 assign bikeaccess
 	if bicycle=yes|designated|permissive|destination|mtb then true
 	else if bicycle=no|dismount|private|use_sidepath then false
