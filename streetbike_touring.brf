@@ -278,7 +278,7 @@ assign surface_cost_raw
 		# gravel is often confused with fine_gravel
 		# we like to avoid it to judge if tracktype or smoothness are given
 		else if and ( and tracktype= smoothness= ) surface=gravel then 9.0
-		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=gravel then -1.0
+		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=gravel then smoothness_tier2
 		else if surface=mud then smoothness_tier6
 		else if surface=clay|sand then 6.0
 		else smoothness_tier5
