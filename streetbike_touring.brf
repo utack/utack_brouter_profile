@@ -264,9 +264,8 @@ assign surface_cost_raw
 		else if surface=concrete then smoothness_tier1
 		else if surface=paving_stones then smoothness_tier1
 		else if surface=compacted|fine_gravel|metal then smoothness_tier2
-		# gravel is often confused with fine_gravel
-		# assume gravel means fine gravel under certain conditions
-		else if and surface=gravel and ( or is_cycleroute highway=cycleway ) and smoothness= tracktype= then smoothness_tier2
+		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle routes
+		else if and surface=gravel ( or is_cycleroute highway=cycleway ) then smoothness_tier2
 		else if surface=grass_paver then smoothness_tier3
 		else if surface=pebblestone then smoothness_tier3
 		else if surface=sett|cobblestone then smoothness_tier5
@@ -276,9 +275,10 @@ assign surface_cost_raw
 		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=unpaved then -1.0
 		else if surface=dirt|earth|ground then smoothness_tier5
 		# gravel is often confused with fine_gravel
-		# we like to avoid it to judge if tracktype or smoothness are given
+		# no other indication about smoothness, assume worst case scenario of coarse gravel
 		else if and ( and tracktype= smoothness= ) surface=gravel then 9.0
-		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=gravel then smoothness_tier2
+		# assume fine_gravel for the rest of cases because smoothness or tracktype will overrule it if this guess is wrong
+		else if surface=gravel then smoothness_tier2
 		else if surface=mud then smoothness_tier6
 		else if surface=clay|sand then 6.0
 		else smoothness_tier5
