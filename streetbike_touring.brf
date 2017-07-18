@@ -24,7 +24,7 @@ assign smoothness_tier0 0.0
 assign smoothness_tier1 0.1
 assign smoothness_tier2 0.3
 assign smoothness_tier3 0.4
-assign smoothness_tier4 0.6
+assign smoothness_tier4 0.8
 assign smoothness_tier5 1.0
 assign smoothness_tier6 1.5
 assign smoothness_tier7 3.0
@@ -286,11 +286,11 @@ assign surface_cost_raw
 assign mtb_cost_raw
 	# fallback to mountainbike scale
 	if ( not mtb:scale= ) then
-		if mtb:scale=0 then smoothness_tier6
+		if mtb:scale=0 then smoothness_tier5
 		else if mtb:scale=1 then smoothness_tier7
 		else 10000
 	else if ( not mtb:scale:uphill= ) then
-		if mtb:scale:uphill=0 then smoothness_tier6
+		if mtb:scale:uphill=0 then smoothness_tier5
 		else if mtb:scale:uphill=1 then smoothness_tier7
 		else 10000
 	else if or ( not route_mtb_= ) route=mtb then 10000
@@ -298,7 +298,7 @@ assign mtb_cost_raw
 assign hike_cost_raw
 	# fallback to hiking route classification
 	if ( not sac_scale= ) then
-		if sac_scale=hiking then smoothness_tier6  
+		if sac_scale=hiking then smoothness_tier5  
 		else 10000
 	else -1
 	
@@ -504,7 +504,7 @@ assign footaccess
 
 assign access_cost
 	# crossing=no evaluation might be too agressive, but we are limited by brouter data here
-	if and crossing=no ( not highway=traffic_signals ) then 10000
+	if and crossing=no ( not highway=traffic_signals ) then 500
 	# even if we can pass a barrier, we likely must slow down a bit
 	else if ( and bikeaccess ( not barrier= ) ) then 25
 	else if bikeaccess then 0
