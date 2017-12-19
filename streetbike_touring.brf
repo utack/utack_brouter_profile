@@ -51,6 +51,7 @@ assign speed_tier4 0.6
 assign priorityclassifier = if highway= then 1 else 0  
 
 # Determine if way is part of a cycleroute
+# TODO split in official and inofficial cycleroute
 assign is_cycleroute
 	or route_bicycle_rcn=yes
 	or route_bicycle_lcn=yes
@@ -59,7 +60,17 @@ assign is_cycleroute
 	or lcn=yes
 	or rcn=yes
 	ncn=yes
-
+	
+assign is_cycleroute_other
+	or route_bicycle_=yes
+	or route_bicycle_radweit=yes
+	or route_bicycle_rcn=proposed
+	or route_bicycle_lcn=proposed
+	or route_bicycle_icn=proposed
+	or route_bicycle_ncn=proposed
+	or lcn=proposed
+	or rcn=proposed
+	ncn=proposed
 
 # Determine if we are driving against a oneway
 # Missing: cycleway:right/left:oneway=no, we are limited by brouter data here
@@ -150,7 +161,11 @@ assign hascycleway
 		else false
 	else false
 
-# Determine if we have access
+# Determine access properties for vehicles
+
+#TODO any_motoraccess
+
+# TODO: add new waytypes
 assign bikeaccess
 	if ( not route=ferry ) then
 		if bicycle=yes|designated|permissive|destination|mtb then true
@@ -192,6 +207,7 @@ assign ferryaccess
 
 # Needed to trigger initialcost, any fantasy value works as long as they differ for waytypes
 # Value chances when going from way to way means initialcost is added
+# TODO: add new waytypes
 assign initialclassifier_waytype
 	if highway=residential then 10
 	else if highway=service|rest_area|services then 12
@@ -256,6 +272,7 @@ assign tracktype_cost_raw
 		else if tracktype=grade5 then smoothness_tier6
 		else smoothness_tier7
 	else -1
+# TODO: new concrete: values and highway=unsurfaced
 assign surface_cost_raw
 	# the surface is great indicator for smoothness
 	if ( not surface= ) then
@@ -304,6 +321,7 @@ assign hike_cost_raw
 	
 assign smoothness_max_cost_raw max smoothness_cost_raw max tracktype_cost_raw max surface_cost_raw max mtb_cost_raw hike_cost_raw
 
+# TODO: add new waytypes
 assign smoothness_cost
 	# we make an exception for excellent smoothness
 	if equal smoothness_cost_raw -0.1 then smoothness_cost_raw
@@ -363,6 +381,7 @@ assign traffic_cost
 		( highway=platform|corridor )
 		then traffic_tier1
 	# anything without motor vehicles is fine
+	# TODO: use new any_motoraccess variable
 	else if motor_vehicle=no|private|agricultural|emergency then 0.0
 	# 3+ lanes = lots of expected traffic
 	else if and ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) ( not hascycleway ) then traffic_tier4
@@ -420,6 +439,7 @@ assign oneway_cost =
 		else 20
 	else 0
 
+#TODO: indoor cost
 
 ################################################################
 #                     Inital and Turn Cost                     #
@@ -452,9 +472,9 @@ assign turncost
 #      Roads that are part of a cycleroute are preferred       #
 ################################################################
 
-# We go 20% extra way, if it means we are on a cycleroute
+# We go 20% extra way, if it means we are on an official cycleroute, or 10% for proposed cycle routes
 assign cycleroute_cost
-	if class:bicycle= then if is_cycleroute then 0.0 else 0.2
+	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.1 else 0.2
 	else if class:bicycle=-3 then 3.0
 	else if class:bicycle=-2 then 1.0
 	else if class:bicycle=-1 then 0.4
@@ -480,6 +500,8 @@ assign costfactor
 #   A bunch of helper-stuff before the actual nodecost logic   #
 ################################################################
 
+
+
 assign bikeaccess
 	if bicycle=yes|designated|permissive|destination then true
 	else if bicycle=no|dismount|private then false
@@ -503,7 +525,7 @@ assign footaccess
 ################################################################
 
 assign access_cost
-	# crossing=no evaluation might be too agressive, but we are limited by brouter data here
+#TODO: crossing=no use any_motoraccess
 	if and crossing=no ( not highway=traffic_signals ) then 500
 	# even if we can pass a barrier, we likely must slow down a bit
 	else if ( and bikeaccess ( not barrier= ) ) then 25
