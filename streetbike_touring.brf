@@ -51,7 +51,6 @@ assign speed_tier4 0.6
 assign priorityclassifier = if highway= then 1 else 0  
 
 # Determine if way is part of a cycleroute
-# TODO split in official and inofficial cycleroute
 assign is_cycleroute
 	or route_bicycle_rcn=yes
 	or route_bicycle_lcn=yes
