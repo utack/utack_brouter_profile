@@ -164,20 +164,21 @@ assign hascycleway
 
 #TODO any_motoraccess
 
-# TODO: add new waytypes
 assign bikeaccess
 	if ( not route=ferry ) then
 		if bicycle=yes|designated|permissive|destination|mtb then true
 		else if bicycle=no|dismount|private|use_sidepath then false
 		else if vehicle=yes|destination|permissive|designated then true
 		else if vehicle=no|agricultural|private then false
+		else if indoor=yes then false
 		else if access=yes|permissive|destination|designated then true
 		else if access=private|no|agricultural|customers|delivery then false
 		# no explicit access rules, make assumptions based on waytype
 		else if
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
 			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-			or highway=track|path|cycleway|crossing
+			or highway=driveway|mini_roundabout|turning_loop
+			or highway=track|path|cycleway|crossing|byway|unsurfaced
 			( and highway=footway|pedestrian is_cycleroute )
 			then true
 		else false
@@ -194,7 +195,8 @@ assign footaccess
 		else if
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
 			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-			or highway=track|path|crossing
+			or highway=driveway|mini_roundabout|turning_loop
+			or highway=track|path|crossing|byway|unsurfaced
 			highway=footway|steps|pedestrian|corridor|platform
 			then true
 		else false
@@ -206,11 +208,10 @@ assign ferryaccess
 
 # Needed to trigger initialcost, any fantasy value works as long as they differ for waytypes
 # Value chances when going from way to way means initialcost is added
-# TODO: add new waytypes
 assign initialclassifier_waytype
 	if highway=residential then 10
-	else if highway=service|rest_area|services then 12
-	else if highway=track|path then 13
+	else if highway=service|rest_area|services|driveway|mini_roundabout|turning_loop then 12
+	else if highway=track|path|byway|unsurfaced then 13
 	else if highway=footway|pedestrian then 14
 	else if highway=road|unclassified then 15
 	else if highway=tertiary then 8
@@ -270,24 +271,25 @@ assign tracktype_cost_raw
 		else if tracktype=grade4 then smoothness_tier5
 		else if tracktype=grade5 then smoothness_tier6
 		else smoothness_tier7
+	else if 4wd_only=yes|recommended then smoothness_tier5
 	else -1
-# TODO: new concrete: values and highway=unsurfaced
 assign surface_cost_raw
 	# the surface is great indicator for smoothness
 	if ( not surface= ) then
 		if surface=asphalt then smoothness_tier0
 		else if surface=paved then smoothness_tier1
-		else if surface=concrete then smoothness_tier1
+		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then smoothness_tier1
 		else if surface=paving_stones then smoothness_tier1
 		else if surface=compacted|fine_gravel|metal then smoothness_tier2
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle routes
 		else if and surface=gravel ( or is_cycleroute highway=cycleway ) then smoothness_tier2
+		else if ( or concrete=lanes concrete=plates ) then smoothness_tier3
 		else if surface=grass_paver then smoothness_tier3
 		else if surface=pebblestone then smoothness_tier3
 		else if surface=sett|cobblestone then smoothness_tier5
 		else if surface=grass|wood then smoothness_tier5
 		# unpaved is very generic, we like to avoid it to judge if tracktype or smoothness are given
-		else if and ( and tracktype= smoothness= ) surface=unpaved then smoothness_tier5
+		else if and ( and tracktype= smoothness= ) ( or surface=unpaved highway=unsurfaced ) then smoothness_tier5
 		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=unpaved then -1.0
 		else if surface=dirt|earth|ground then smoothness_tier5
 		# gravel is often confused with fine_gravel
@@ -320,7 +322,6 @@ assign hike_cost_raw
 	
 assign smoothness_max_cost_raw max smoothness_cost_raw max tracktype_cost_raw max surface_cost_raw max mtb_cost_raw hike_cost_raw
 
-# TODO: add new waytypes
 assign smoothness_cost
 	# we make an exception for excellent smoothness
 	if equal smoothness_cost_raw -0.1 then smoothness_cost_raw
@@ -336,7 +337,10 @@ assign smoothness_cost
 		or highway=crossing
 		or highway=road
 		or highway=rest_area
-		or highway=services 
+		or highway=services
+		or highway=driveway
+		or highway=mini_roundabout
+		or highway=turning_loop
 		highway=cycleway )
 		then smoothness_tier1
 	# waytypes that are almost certainly in good condition
@@ -349,6 +353,9 @@ assign smoothness_cost
 		or highway=road
 		or highway=rest_area
 		or highway=services 
+		or highway=driveway
+		or highway=mini_roundabout
+		or highway=turning_loop
 		highway=cycleway )
 		then smoothness_tier0
 	else if (
@@ -363,7 +370,7 @@ assign smoothness_cost
 	# probably not too bad smoothness when dedicated for bike
 	else if bicycle=designated then smoothness_tier2
 	# tracks are usualy slightly compacted, paths often grass or loose ground
-	else if highway=track then smoothness_tier4
+	else if highway=track|byway then smoothness_tier4
 	else if highway=path then smoothness_tier5
 	else smoothness_tier6
 
@@ -391,7 +398,7 @@ assign traffic_cost
 	else if not hascycleway then
 		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link then traffic_tier4
 		else if highway=secondary|secondary_link|tertiary|tertiary_link then traffic_tier3
-		else if highway=residential then traffic_tier2
+		else if highway=residential|mini_roundabout then traffic_tier2
 		else if highway=road|unclassified then traffic_tier1
 		else 0.0
 	else if hascycleway then
@@ -437,8 +444,6 @@ assign oneway_cost =
 		if greater traffic_cost traffic_tier1 then 50
 		else 20
 	else 0
-
-#TODO: indoor cost
 
 ################################################################
 #                     Inital and Turn Cost                     #
