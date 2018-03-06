@@ -175,7 +175,7 @@ assign bikeaccess
 		else if bicycle=no|dismount|private|use_sidepath then false
 		else if vehicle=yes|destination|permissive|designated then true
 		else if vehicle=no|agricultural|private then false
-		else if indoor=yes then false
+		else if and indoor=yes not highway=cycleway then false
 		else if access=yes|permissive|destination|designated then true
 		else if access=private|no|agricultural|customers|delivery then false
 		# no explicit access rules, make assumptions based on waytype
@@ -683,13 +683,10 @@ assign traffic_cost
 	else if not hascycleway then
 		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link then traffic_tier4
 		else if highway=secondary|secondary_link|tertiary|tertiary_link then traffic_tier3
-		else if highway=residential|mini_roundabout then traffic_tier2
-		else if highway=road|unclassified then traffic_tier1
+		else if highway=residential|mini_roundabout|road|unclassified then traffic_tier2
 		else 0.0
 	else if hascycleway then
-		if ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) then traffic_tier2
-		else if lanes=5|6|7 then traffic_tier2
-		else if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
+		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link|secondary|secondary_link then traffic_tier2
 		else if highway=tertiary|tertiary_link then traffic_tier1
 		else 0.0
 	else 0.0
