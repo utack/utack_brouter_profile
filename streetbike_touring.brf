@@ -20,15 +20,6 @@ assign uphillcutoff 0.5
 assign downhillcutoff 2.0
 assign downhillcost 100
 
-assign smoothness_tier0 0.0
-assign smoothness_tier1 0.1
-assign smoothness_tier2 0.3
-assign smoothness_tier3 0.4
-assign smoothness_tier4 0.8
-assign smoothness_tier5 1.0
-assign smoothness_tier6 1.5
-assign smoothness_tier7 3.0
-
 assign traffic_tier1 0.1
 assign traffic_tier2 0.2
 assign traffic_tier3 0.4
@@ -162,7 +153,21 @@ assign hascycleway
 
 # Determine access properties for vehicles
 
-#TODO any_motoraccess
+assign any_motoraccess  
+	if motorcar=yes|destination|designated|permissive then true
+	else if motor_vehicle=yes|destination|designated|permissive then true
+	else if motorcycle=yes|destination|designated|permissive then true
+	else if and vehicle=yes|destination|designated|permissive not motor_vehicle=no|private|agricultural then true
+	else if hgv=yes|destination|designated|permissive then true
+	else if and access=yes|destination|designated|permissive not motor_vehicle=no|private|agricultural then true
+	else if motor_vehicle=no|private|agricultural then false
+	else if access=no|private|agricultural then false
+	else if (
+		or highway=residential|service|unclassified|road|living_street|rest_area|services
+		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
+		highway=driveway|mini_roundabout|turning_loop|unsurfaced )
+		then true
+	else false
 
 assign bikeaccess
 	if ( not route=ferry ) then
@@ -249,84 +254,368 @@ assign access_cost
 #                     Determine smoothness                     #
 ################################################################
 
+# define a "bracket" that contains all possible penalties based on all the tags indicating road quality
+# it has a min penalty, a max penatly, and a expectation value (called peak)
+assign minbrk -0.2
+assign maxbrk 10001
+assign peakcurrent -1
+assign peakavgnum 0
 
-assign smoothness_cost_raw
-	# smoothnes value is the best option to determine smoothness
+# smoothnes value is the best option to determine smoothness
+assign new_minbrk
+	if ( not smoothness= ) then
+		if smoothness=excellent then -0.2
+		else if smoothness=very_good then -0.1
+		else if smoothness=good then 0.0
+		else if smoothness=intermediate|medium then 0.2
+		else if smoothness=bad|robust_wheels|poor then 0.6
+		else if smoothness=very_bad|high_clearance|rough then 1.5
+		else if smoothness=horrible|off_road_wheels then 6.0
+		else if smoothness=very_horrible|impassable then 9.0
+		else -0.2
+	else -1
+assign new_maxbrk
 	if ( not smoothness= ) then
 		if smoothness=excellent then -0.1
-		else if smoothness=very_good|good then smoothness_tier0
-		else if smoothness=intermediate|medium then smoothness_tier1
-		else if smoothness=bad|robust_wheels|poor then smoothness_tier4
-		else if smoothness=very_bad|high_clearance|rough then smoothness_tier6
-		else if smoothness=horrible|off_road_wheels then 4.0
+		else if smoothness=very_good then 0.1
+		else if smoothness=good then 0.3
+		else if smoothness=intermediate|medium then 0.6
+		else if smoothness=bad|robust_wheels|poor then 3.0
+		else if smoothness=very_bad|high_clearance|rough then 8.0
+		else if smoothness=horrible|off_road_wheels then 9.0
 		else if smoothness=very_horrible|impassable then 9.0
-		else smoothness_tier6
-	else -1
-assign tracktype_cost_raw
-	# tracktype classification allows to determine approximate smoothness too
-	if ( not tracktype= ) then
-		if tracktype=grade1 then smoothness_tier1
-		else if tracktype=grade2 then smoothness_tier2
-		else if tracktype=grade3 then smoothness_tier3
-		else if tracktype=grade4 then smoothness_tier5
-		else if tracktype=grade5 then smoothness_tier6
-		else smoothness_tier7
-	else if 4wd_only=yes|recommended then smoothness_tier5
-	else -1
-assign surface_cost_raw
-	# the surface is great indicator for smoothness
-	if ( not surface= ) then
-		if surface=asphalt then smoothness_tier0
-		else if surface=paved then smoothness_tier1
-		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then smoothness_tier1
-		else if surface=paving_stones then smoothness_tier1
-		else if surface=compacted|fine_gravel|metal then smoothness_tier2
-		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle routes
-		else if and surface=gravel ( or is_cycleroute highway=cycleway ) then smoothness_tier2
-		else if ( or concrete=lanes concrete=plates ) then smoothness_tier3
-		else if surface=grass_paver then smoothness_tier3
-		else if surface=pebblestone then smoothness_tier3
-		else if surface=sett|cobblestone then smoothness_tier5
-		else if surface=grass|wood then smoothness_tier5
-		# unpaved is very generic, we like to avoid it to judge if tracktype or smoothness are given
-		else if and ( and tracktype= smoothness= ) ( or surface=unpaved highway=unsurfaced ) then smoothness_tier5
-		else if and ( or ( not tracktype= ) ( not smoothness= ) ) surface=unpaved then -1.0
-		else if surface=dirt|earth|ground then smoothness_tier5
-		# gravel is often confused with fine_gravel
-		# no other indication about smoothness, assume worst case scenario of coarse gravel
-		else if and ( and tracktype= smoothness= ) surface=gravel then 9.0
-		# assume fine_gravel for the rest of cases because smoothness or tracktype will overrule it if this guess is wrong
-		else if surface=gravel then smoothness_tier2
-		else if surface=mud then smoothness_tier6
-		else if surface=clay|sand then 6.0
-		else smoothness_tier5
-	else -1
-assign mtb_cost_raw
-	# fallback to mountainbike scale
-	if ( not mtb:scale= ) then
-		if mtb:scale=0 then smoothness_tier5
-		else if mtb:scale=1 then smoothness_tier7
 		else 10000
-	else if ( not mtb:scale:uphill= ) then
-		if mtb:scale:uphill=0 then smoothness_tier5
-		else if mtb:scale:uphill=1 then smoothness_tier7
-		else 10000
-	else if or ( not route_mtb_= ) route=mtb then 10000
-	else -1
-assign hike_cost_raw
-	# fallback to hiking route classification
-	if ( not sac_scale= ) then
-		if sac_scale=hiking then smoothness_tier5  
-		else 10000
+	else 10001
+assign new_peak
+	if ( not smoothness= ) then
+		if smoothness=excellent then -0.2
+		else if smoothness=very_good then -0.1
+		else if smoothness=good then 0.0
+		else if smoothness=intermediate|medium then 0.3
+		else if smoothness=bad|robust_wheels|poor then 1.2
+		else if smoothness=very_bad|high_clearance|rough then 2.0
+		else if smoothness=horrible|off_road_wheels then 8.0
+		else if smoothness=very_horrible|impassable then 9.0
+		else 6.0
 	else -1
 	
-assign smoothness_max_cost_raw max smoothness_cost_raw max tracktype_cost_raw max surface_cost_raw max mtb_cost_raw hike_cost_raw
+# merge the min and max ranges of the existing and new bracket
+assign minbrk max minbrk new_minbrk
+assign minmax min maxbrk new_maxbrk
+assign maxmax max maxbrk new_maxbrk
+assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
+# merge the expectation values of the existing and new bracket
+# workaround because division is missing
+assign peakavgmulfactor
+	if equal peakavgnum 0 then 1
+	else if equal peakavgnum 1 then 0.5
+	else if equal peakavgnum 2 then 0.3333
+	else if equal peakavgnum 3 then 0.25
+	else if equal peakavgnum 4 then 0.2
+	else if equal peakavgnum 5 then 0.1667
+	else 0.1429
+assign peakcopy peakcurrent
+assign peakcurrent
+	# peak 1 is outside of the bracket
+	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
+		# peak 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# peak 2 is inside the bracket, we use it
+		else new_peak	
+	# peak 1 is inside the bracket
+	else
+		# peak 2 is outside the bracket, we use peak 1
+		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
+		# both peaks are inside the bracket, use the middle values of all peaks
+		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
+assign peakavgnum
+	# peak 1 and 2 are inside the bracket
+	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
+	else if equal new_peak -1 then peakavgnum
+	else 1
+
+# tracktype classification allows to determine approximate smoothness too
+assign new_minbrk
+	if ( not tracktype= ) then
+		if tracktype=grade1 then -0.2
+		else if tracktype=grade2 then 0.2
+		else if tracktype=grade3 then 0.4
+		else if tracktype=grade4 then 0.5
+		else if tracktype=grade5 then 1.0
+		else -0.2
+	else if 4wd_only=yes|recommended then 1.0
+	else -1
+assign new_maxbrk
+	if ( not tracktype= ) then
+		if tracktype=grade1 then 0.4
+		else if tracktype=grade2 then 0.6
+		else if tracktype=grade3 then 1.0
+		else if tracktype=grade4 then 2.0
+		else if tracktype=grade5 then 6.0
+		else 10000
+	else if 4wd_only=yes|recommended then 6.0
+	else 10001
+assign new_peak
+	if ( not tracktype= ) then
+		if tracktype=grade1 then 0.1
+		else if tracktype=grade2 then 0.3
+		else if tracktype=grade3 then 0.5
+		else if tracktype=grade4 then 1.2
+		else if tracktype=grade5 then 2.0
+		else 6.0
+	else if 4wd_only=yes|recommended then 2.0
+	else -1
+# merge the min and max ranges of the existing and new bracket
+assign minbrk max minbrk new_minbrk
+assign minmax min maxbrk new_maxbrk
+assign maxmax max maxbrk new_maxbrk
+assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
+# merge the expectation values of the existing and new bracket
+# workaround because division is missing
+assign peakavgmulfactor
+	if equal peakavgnum 0 then 1
+	else if equal peakavgnum 1 then 0.5
+	else if equal peakavgnum 2 then 0.3333
+	else if equal peakavgnum 3 then 0.25
+	else if equal peakavgnum 4 then 0.2
+	else if equal peakavgnum 5 then 0.1667
+	else 0.1429
+assign peakcopy peakcurrent
+assign peakcurrent
+	# peak 1 is outside of the bracket
+	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
+		# peak 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# peak 2 is inside the bracket, we use it
+		else new_peak	
+	# peak 1 is inside the bracket
+	else
+		# peak 2 is outside the bracket, we use peak 1
+		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
+		# both peaks are inside the bracket, use the middle values of all peaks
+		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
+assign peakavgnum
+	# peak 1 and 2 are inside the bracket
+	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
+	else if equal new_peak -1 then peakavgnum
+	else 1
+
+	
+# the surface is great indicator for smoothness
+assign new_minbrk
+	if ( not surface= ) then
+		if surface=unpaved then 0.4
+		else if surface=paved then -0.2
+		else if surface=asphalt then -0.2
+		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then -0.2
+		else if ( or concrete=lanes concrete=plates ) then 0.3
+		else if surface=paving_stones then 0.1
+		else if surface=compacted|fine_gravel then 0.2
+		else if surface=metal then 0.0
+		else if surface=dirt|earth|ground then 0.8
+		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle routes
+		else if and surface=gravel ( or is_cycleroute highway=cycleway ) then 0.2
+		else if surface=gravel then 0.2
+		else if surface=grass_paver then 0.4
+		else if surface=pebblestone then 0.4
+		else if surface=sett|cobblestone then 0.8
+		else if surface=grass then 0.8
+		else if surface=wood then 0.8
+		else if surface=mud|clay|sand then 8.0
+		else if highway=unsurfaced then 0.4
+		else -0.2
+	else -1
+assign new_maxbrk
+	if ( not surface= ) then
+		if surface=unpaved then 9.0
+		else if surface=paved then 3.0
+		else if surface=asphalt then 1.0
+		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then 1.0
+		else if ( or concrete=lanes concrete=plates ) then 1.5
+		else if surface=paving_stones then 0.6
+		else if surface=compacted|fine_gravel then 1.0
+		else if surface=metal then 0.8
+		else if surface=dirt|earth|ground then 9.0
+		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle routes
+		else if and surface=gravel ( or is_cycleroute highway=cycleway ) then 1.0
+		else if surface=gravel then 9.0
+		else if surface=grass_paver then 0.8
+		else if surface=pebblestone then 3.0
+		else if surface=sett|cobblestone then 5.0
+		else if surface=grass then 3.0
+		else if surface=wood then 3.0
+		else if surface=mud|clay|sand then 9.0
+		else 10000
+	else if highway=unsurfaced then 9.0 
+	else 10001
+assign new_peak
+	if ( not surface= ) then
+		if surface=unpaved then 1.0
+		else if surface=paved then 0.3
+		else if surface=asphalt then 0.1
+		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then 0.1
+		else if ( or concrete=lanes concrete=plates ) then 0.4
+		else if surface=paving_stones then 0.2
+		else if surface=compacted|fine_gravel then 0.3
+		else if surface=metal then 0.3
+		else if surface=dirt|earth|ground then 1.0
+		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle routes
+		else if and surface=gravel ( or is_cycleroute highway=cycleway ) then 0.2
+		else if surface=gravel then 2.0
+		else if surface=grass_paver then 0.4
+		else if surface=pebblestone then 0.6
+		else if surface=sett|cobblestone then 1.2
+		else if surface=grass then 1.5
+		else if surface=wood then 1.0
+		else if surface=mud|clay|sand then 8.0
+		else 6.0
+	else if highway=unsurfaced then 1.0
+	else -1
+
+# merge the min and max ranges of the existing and new bracket
+assign minbrk max minbrk new_minbrk
+assign minmax min maxbrk new_maxbrk
+assign maxmax max maxbrk new_maxbrk
+assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
+# merge the expectation values of the existing and new bracket
+# workaround because division is missing
+assign peakavgmulfactor
+	if equal peakavgnum 0 then 1
+	else if equal peakavgnum 1 then 0.5
+	else if equal peakavgnum 2 then 0.3333
+	else if equal peakavgnum 3 then 0.25
+	else if equal peakavgnum 4 then 0.2
+	else if equal peakavgnum 5 then 0.1667
+	else 0.1429
+assign peakcopy peakcurrent
+assign peakcurrent
+	# peak 1 is outside of the bracket
+	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
+		# peak 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# peak 2 is inside the bracket, we use it
+		else new_peak	
+	# peak 1 is inside the bracket
+	else
+		# peak 2 is outside the bracket, we use peak 1
+		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
+		# both peaks are inside the bracket, use the middle values of all peaks
+		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
+assign peakavgnum
+	# peak 1 and 2 are inside the bracket
+	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
+	else if equal new_peak -1 then peakavgnum
+	else 1
+
+# fallback to mountainbike scale
+assign new_minbrk
+	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
+		if or mtb:scale=0 mtb:scale:uphill=0 then -0.2
+		else if or mtb:scale=1 mtb:scale:uphill=1 then 1.0
+		else -0.2
+	else -1
+assign new_maxbrk
+	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
+		if or mtb:scale=0 mtb:scale:uphill=0 then 2.0
+		else if or mtb:scale=1 mtb:scale:uphill=1 then 9.0
+		else 10000
+	else 10001
+assign new_peak
+	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
+		if or mtb:scale=0 mtb:scale:uphill=0 then 1.2
+		else if or mtb:scale=1 mtb:scale:uphill=1 then 3.0
+		else 10000
+	else -1
+
+# merge the min and max ranges of the existing and new bracket
+assign minbrk max minbrk new_minbrk
+assign minmax min maxbrk new_maxbrk
+assign maxmax max maxbrk new_maxbrk
+assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
+# merge the expectation values of the existing and new bracket
+# workaround because division is missing
+assign peakavgmulfactor
+	if equal peakavgnum 0 then 1
+	else if equal peakavgnum 1 then 0.5
+	else if equal peakavgnum 2 then 0.3333
+	else if equal peakavgnum 3 then 0.25
+	else if equal peakavgnum 4 then 0.2
+	else if equal peakavgnum 5 then 0.1667
+	else 0.1429
+assign peakcopy peakcurrent
+assign peakcurrent
+	# peak 1 is outside of the bracket
+	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
+		# peak 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# peak 2 is inside the bracket, we use it
+		else new_peak	
+	# peak 1 is inside the bracket
+	else
+		# peak 2 is outside the bracket, we use peak 1
+		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
+		# both peaks are inside the bracket, use the middle values of all peaks
+		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
+assign peakavgnum
+	# peak 1 and 2 are inside the bracket
+	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
+	else if equal new_peak -1 then peakavgnum
+	else 1
+
+# fallback to hiking route classification
+assign new_minbrk
+	if ( not sac_scale= ) then
+		if sac_scale=hiking then 0.0  
+		else 10000
+	else -1
+assign new_maxbrk
+	if ( not sac_scale= ) then
+		if sac_scale=hiking then 9.0 
+		else 10000
+	else 10001
+assign new_peak
+	if ( not sac_scale= ) then
+		if sac_scale=hiking then 1.5
+		else 10000
+	else -1
+
+# merge the min and max ranges of the existing and new bracket
+assign minbrk max minbrk new_minbrk
+assign minmax min maxbrk new_maxbrk
+assign maxmax max maxbrk new_maxbrk
+assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
+# merge the expectation values of the existing and new bracket
+# workaround because division is missing
+assign peakavgmulfactor
+	if equal peakavgnum 0 then 1
+	else if equal peakavgnum 1 then 0.5
+	else if equal peakavgnum 2 then 0.3333
+	else if equal peakavgnum 3 then 0.25
+	else if equal peakavgnum 4 then 0.2
+	else if equal peakavgnum 5 then 0.1667
+	else 0.1429
+assign peakcopy peakcurrent
+assign peakcurrent
+	# peak 1 is outside of the bracket
+	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
+		# peak 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# peak 2 is inside the bracket, we use it
+		else new_peak	
+	# peak 1 is inside the bracket
+	else
+		# peak 2 is outside the bracket, we use peak 1
+		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
+		# both peaks are inside the bracket, use the middle values of all peaks
+		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
+assign peakavgnum
+	# peak 1 and 2 are inside the bracket
+	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcurrent maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
+	else if equal new_peak -1 then peakavgnum
+	else 1
 
 assign smoothness_cost
-	# we make an exception for excellent smoothness
-	if equal smoothness_cost_raw -0.1 then smoothness_cost_raw
-	# we have a good idea about smoothness from one of the above tags
-	else if greater smoothness_max_cost_raw -1 then smoothness_max_cost_raw
+	if greater peakavgnum 0 then peakcurrent
 	# no good indication of smoothness, fallback to make rough assumptions based on waytype
 	# waytypes that are likely in good condition, but add a little cost for unknown condition
 	else if and ( not is_cycleroute ) (
@@ -340,9 +629,8 @@ assign smoothness_cost
 		or highway=services
 		or highway=driveway
 		or highway=mini_roundabout
-		or highway=turning_loop
-		highway=cycleway )
-		then smoothness_tier1
+		highway=turning_loop )
+		then 0.1
 	# waytypes that are almost certainly in good condition
 	else if and is_cycleroute (
 		or highway=residential
@@ -355,24 +643,24 @@ assign smoothness_cost
 		or highway=services 
 		or highway=driveway
 		or highway=mini_roundabout
-		or highway=turning_loop
-		highway=cycleway )
-		then smoothness_tier0
+		highway=turning_loop )
+		then 0.0
 	else if (
 		or highway=tertiary|tertiary_link
 		or highway=secondary|secondary_link
 		or highway=primary|primary_link
 		or highway=motorway|motorway_link
-		highway=trunk|trunk_link )
-		then smoothness_tier0
+		or highway=trunk|trunk_link
+		highway=cycleway )
+		then 0.0
 	# footways are expected to be ok
-	else if highway=footway|pedestrian|platform then smoothness_tier1
+	else if highway=footway|pedestrian|platform then 0.1
 	# probably not too bad smoothness when dedicated for bike
-	else if bicycle=designated then smoothness_tier2
+	else if bicycle=designated then 0.2
 	# tracks are usualy slightly compacted, paths often grass or loose ground
-	else if highway=track|byway then smoothness_tier4
-	else if highway=path then smoothness_tier5
-	else smoothness_tier6
+	else if highway=track|byway then 0.8
+	else if highway=path then 1.0
+	else 1.5
 
 
 ################################################################
@@ -382,13 +670,10 @@ assign smoothness_cost
 
 assign traffic_cost
 	# many pedestrians but no cars expected
-	if	or ( and foot=designated ( not segregated=yes ) )
-		or ( and highway=footway|pedestrian ( not segregated=yes ) )
-		( highway=platform|corridor )
+		if and highway=pedestrian|platform|corridor ( not segregated=yes )
 		then traffic_tier1
 	# anything without motor vehicles is fine
-	# TODO: use new any_motoraccess variable
-	else if motor_vehicle=no|private|agricultural|emergency then 0.0
+	else if not any_motoraccess then 0.0
 	# 3+ lanes = lots of expected traffic
 	else if and ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) ( not hascycleway ) then traffic_tier4
 	else if and lanes=5|6|7  ( not hascycleway ) then traffic_tier4
@@ -466,8 +751,8 @@ assign turncost
 	# we are walking, no cost for turning
 	else if ( not bikeaccess ) then 0
 	# we are on a crappy way and slow
-	else if ( greater smoothness_cost smoothness_tier5 ) then 10
-	else if ( greater smoothness_cost smoothness_tier3 ) then 30
+	else if ( greater smoothness_cost 1.0 ) then 10
+	else if ( greater smoothness_cost 0.4 ) then 30
 	# we are on an ok way and probably fast enough that turning is annoying
 	else 60
 
@@ -478,7 +763,7 @@ assign turncost
 
 # We go 20% extra way, if it means we are on an official cycleroute, or 10% for proposed cycle routes
 assign cycleroute_cost
-	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.1 else 0.2
+	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.10 else 0.20
 	else if class:bicycle=-3 then 3.0
 	else if class:bicycle=-2 then 1.0
 	else if class:bicycle=-1 then 0.4
@@ -497,7 +782,6 @@ assign costfactor
 	else max ( add 1.0 add access_cost add smoothness_cost add traffic_cost add maxspeed_cost add oneway_cost cycleroute_cost ) 1.0
 
 
-
 ---context:node
 
 ################################################################
@@ -513,6 +797,7 @@ assign bikeaccess
 	else if vehicle=no|private|agricultural then false
 	else if access=yes|permissive|destination|designated then true
 	else if access=private|no|agricultural then false
+	#TODO barriers without explicit access rules
 	else true
 
 assign footaccess
@@ -521,16 +806,16 @@ assign footaccess
 	else if bicycle=dismount then true
 	else if access=yes|permissive|destination|designated then true
 	else if access=private|no|agricultural then false
+	#TODO barriers without explicit access rules
 	else true
 
 
 ################################################################
-#        Determine which points (like barriers) stop us        #
+#             Determine which points influence us              #
 ################################################################
 
 assign access_cost
-#TODO: crossing=no use any_motoraccess
-	if and crossing=no ( not highway=traffic_signals ) then 500
+	if and crossing=no not way:any_motoraccess then 1000
 	# even if we can pass a barrier, we likely must slow down a bit
 	else if ( and bikeaccess ( not barrier= ) ) then 25
 	else if bikeaccess then 0
