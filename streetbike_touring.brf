@@ -1,6 +1,5 @@
 ################################################################
 #          A BRouter profile suited for a streetbike           #
-#          Note: Right hand traffic countries only             #
 ################################################################
 
 
@@ -8,6 +7,8 @@
 ---context:global
 # switch to choose if ferries are considered in routing
 assign consider_ferries true
+# switch road side we drive on
+assign lefthandtraffic false
 
 assign turnInstructionMode 0
 assign validForBikes 1
@@ -141,11 +142,11 @@ assign hascycleway
 		else if and oneway=-1 ( or cycleway=opposite_lane|opposite_track or cycleway:left=opposite_lane|opposite_track cycleway:right=opposite_lane|opposite_track ) then true
 		else false
 	# twoway street stuff
-	else if reversedirection=yes then
+	else if xor reversedirection=yes lefthandtraffic then
 		if and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) then true
 		else if cycleway=left then true
 		else false
-	else if ( not reversedirection=yes ) then
+	else if xor ( not reversedirection=yes ) lefthandtraffic then
 		if and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) then true
 		else if cycleway=right then true
 		else false
