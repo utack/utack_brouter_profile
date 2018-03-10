@@ -511,20 +511,20 @@ assign peakavgnum
 # fallback to mountainbike scale
 assign new_minbrk
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
-		if or mtb:scale=0 mtb:scale:uphill=0 then -0.2
-		else if or mtb:scale=1 mtb:scale:uphill=1 then 1.0
+		if or mtb:scale=1 mtb:scale:uphill=1 then 1.0
+		else if or mtb:scale=0 mtb:scale:uphill=0 then -0.2
 		else -0.2
 	else -1
 assign new_maxbrk
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
-		if or mtb:scale=0 mtb:scale:uphill=0 then 2.0
-		else if or mtb:scale=1 mtb:scale:uphill=1 then 9.0
+		if or mtb:scale=1 mtb:scale:uphill=1 then 9.0
+		else if or mtb:scale=0 mtb:scale:uphill=0 then 2.0
 		else 10000
 	else 10001
 assign new_peak
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
-		if or mtb:scale=0 mtb:scale:uphill=0 then 1.2
-		else if or mtb:scale=1 mtb:scale:uphill=1 then 3.0
+		if or mtb:scale=1 mtb:scale:uphill=1 then 3.0
+		else if or mtb:scale=0 mtb:scale:uphill=0 then 1.2
 		else 10000
 	else -1
 
