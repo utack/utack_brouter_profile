@@ -793,7 +793,7 @@ assign bikeaccess
 	else if vehicle=no|private|agricultural then false
 	else if access=yes|permissive|destination|designated then true
 	else if access=private|no|agricultural then false
-	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|unknown then false
+	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|lift_gate|cycle_barrier|toll_booth|border_control|chain|fallen_tree|checkpoint|rope|log|kissing_gate|bump_gate|horse_stile|tree|motorcycle_barrier|guard_rail|bar|jersey_barrier|unknown then false
 	else true
 
 assign footaccess
