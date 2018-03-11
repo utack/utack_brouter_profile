@@ -786,8 +786,6 @@ assign costfactor
 #   A bunch of helper-stuff before the actual nodecost logic   #
 ################################################################
 
-
-
 assign bikeaccess
 	if bicycle=yes|designated|permissive|destination then true
 	else if bicycle=no|dismount|private then false
@@ -795,7 +793,7 @@ assign bikeaccess
 	else if vehicle=no|private|agricultural then false
 	else if access=yes|permissive|destination|designated then true
 	else if access=private|no|agricultural then false
-	#TODO barriers without explicit access rules
+	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|unknown then false
 	else true
 
 assign footaccess
@@ -804,7 +802,7 @@ assign footaccess
 	else if bicycle=dismount then true
 	else if access=yes|permissive|destination|designated then true
 	else if access=private|no|agricultural then false
-	#TODO barriers without explicit access rules
+	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|unknown then false
 	else true
 
 
