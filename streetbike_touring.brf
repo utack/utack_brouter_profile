@@ -683,7 +683,9 @@ assign smoothness_cost
 	# probably not too bad smoothness when dedicated for bike
 	else if bicycle=designated then 0.2
 	# tracks are usualy slightly compacted, paths often grass or loose ground
+	else if and highway=track|byway iswet then 2.0
 	else if highway=track|byway then 0.8
+	else if and highway=path iswet then 3.0
 	else if highway=path then 1.0
 	else 1.5
 
@@ -695,7 +697,9 @@ assign smoothness_cost
 
 assign traffic_cost
 	# many pedestrians but no cars expected
-		if and highway=pedestrian|platform|corridor ( not segregated=yes )
+	if or ( and or foot=designated footway=sidewalk ( not segregated=yes ) )
+		or ( and highway=footway|pedestrian ( not segregated=yes ) )
+		( highway=platform|corridor )
 		then traffic_tier1
 	# anything without motor vehicles is fine
 	else if not any_motoraccess then 0.0
