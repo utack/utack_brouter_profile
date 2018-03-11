@@ -171,7 +171,7 @@ assign any_motoraccess
 		highway=driveway|mini_roundabout|turning_loop|unsurfaced )
 		then true
 	else false
-
+	
 assign bikeaccess
 	if ( not route=ferry ) then
 		if bicycle=yes|designated|permissive|destination|mtb then true
@@ -697,7 +697,7 @@ assign smoothness_cost
 
 assign traffic_cost
 	# many pedestrians but no cars expected
-	if or ( and or foot=designated footway=sidewalk ( not segregated=yes ) )
+	if or ( and  foot=designated ( not segregated=yes ) )
 		or ( and highway=footway|pedestrian ( not segregated=yes ) )
 		( highway=platform|corridor )
 		then traffic_tier1
