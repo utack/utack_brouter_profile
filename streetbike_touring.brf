@@ -9,6 +9,8 @@
 assign consider_ferries true
 # switch road side we drive on
 assign lefthandtraffic false
+# switch to assume surfaces are wet
+assign iswet false
 
 assign turnInstructionMode 0
 assign validForBikes 1
@@ -252,17 +254,17 @@ assign access_cost
 	else 10000
 
 ################################################################
-#                     Determine smoothness                     #
+#                  Determine road condition                    #
 ################################################################
 
 # define a "bracket" that contains all possible penalties based on all the tags indicating road quality
-# it has a min penalty, a max penatly, and a expectation value (called peak)
+# it has a min penalty, a max penatly, and a expectation value
 assign minbrk -0.2
 assign maxbrk 10001
-assign peakcurrent -1
-assign peakavgnum 0
+assign expcurrent -1
+assign expavgnum 0
 
-# smoothnes value is the best option to determine smoothness
+# smoothness value is the best option to determine road condition
 assign new_minbrk
 	if ( not smoothness= ) then
 		if smoothness=excellent then -0.2
@@ -284,18 +286,23 @@ assign new_maxbrk
 		else if smoothness=bad|robust_wheels|poor then 3.0
 		else if smoothness=very_bad|high_clearance|rough then 8.0
 		else if smoothness=horrible|off_road_wheels then 9.0
-		else if smoothness=very_horrible|impassable then 9.0
+		else if smoothness=very_horrible|impassable then 10000
 		else 10000
 	else 10001
-assign new_peak
+assign new_exp
 	if ( not smoothness= ) then
 		if smoothness=excellent then -0.2
 		else if smoothness=very_good then -0.1
 		else if smoothness=good then 0.0
+		else if and smoothness=intermediate|medium iswet then 0.5
 		else if smoothness=intermediate|medium then 0.3
+		else if and smoothness=bad|robust_wheels|poor iswet then 2.0
 		else if smoothness=bad|robust_wheels|poor then 1.2
+		else if and smoothness=very_bad|high_clearance|rough iswet then 5.0
 		else if smoothness=very_bad|high_clearance|rough then 2.0
+		else if and smoothness=horrible|off_road_wheels iswet then 9.0
 		else if smoothness=horrible|off_road_wheels then 8.0
+		else if and smoothness=very_horrible|impassable iswet then 10000
 		else if smoothness=very_horrible|impassable then 9.0
 		else 6.0
 	else -1
@@ -307,32 +314,32 @@ assign maxmax max maxbrk new_maxbrk
 assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
 # merge the expectation values of the existing and new bracket
 # workaround because division is missing
-assign peakavgmulfactor
-	if equal peakavgnum 0 then 1
-	else if equal peakavgnum 1 then 0.5
-	else if equal peakavgnum 2 then 0.3333
-	else if equal peakavgnum 3 then 0.25
-	else if equal peakavgnum 4 then 0.2
-	else if equal peakavgnum 5 then 0.1667
+assign expavgmulfactor
+	if equal expavgnum 0 then 1
+	else if equal expavgnum 1 then 0.5
+	else if equal expavgnum 2 then 0.3333
+	else if equal expavgnum 3 then 0.25
+	else if equal expavgnum 4 then 0.2
+	else if equal expavgnum 5 then 0.1667
 	else 0.1429
-assign peakcopy peakcurrent
-assign peakcurrent
-	# peak 1 is outside of the bracket
-	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
-		# peak 2 is outside the bracket, we assume the middle of the bracket
-		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
-		# peak 2 is inside the bracket, we use it
-		else new_peak	
-	# peak 1 is inside the bracket
+assign expcopy expcurrent
+assign expcurrent
+	# exp 1 is outside of the bracket
+	if or ( lesser expcurrent minbrk ) ( greater expcurrent maxbrk )
+		# exp 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# exp 2 is inside the bracket, we use it
+		else new_exp	
+	# exp 1 is inside the bracket
 	else
-		# peak 2 is outside the bracket, we use peak 1
-		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
-		# both peaks are inside the bracket, use the middle values of all peaks
-		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
-assign peakavgnum
-	# peak 1 and 2 are inside the bracket
-	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
-	else if equal new_peak -1 then peakavgnum
+		# exp 2 is outside the bracket, we use exp 1
+		if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then expcurrent
+		# both exps are inside the bracket, use the middle values of all exps
+		else multiply ( add ( multiply expcurrent expavgnum ) new_exp ) expavgmulfactor
+assign expavgnum
+	# exp 1 and 2 are inside the bracket
+	if and ( not or ( lesser expcopy minbrk ) ( greater expcopy maxbrk ) ) ( not or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) ) then add expavgnum 1
+	else if equal new_exp -1 then expavgnum
 	else 1
 
 # tracktype classification allows to determine approximate smoothness too
@@ -356,14 +363,19 @@ assign new_maxbrk
 		else 10000
 	else if 4wd_only=yes|recommended then 6.0
 	else 10001
-assign new_peak
+assign new_exp
 	if ( not tracktype= ) then
 		if tracktype=grade1 then 0.1
+		else if and tracktype=grade2 iswet then 0.6
 		else if tracktype=grade2 then 0.3
+		else if and tracktype=grade3 iswet then 1.2
 		else if tracktype=grade3 then 0.5
+		else if and tracktype=grade4 iswet then 2.0
 		else if tracktype=grade4 then 1.2
+		else if and tracktype=grade5 iswet then 6.0
 		else if tracktype=grade5 then 2.0
 		else 6.0
+	else if and 4wd_only=yes|recommended iswet then 6.0
 	else if 4wd_only=yes|recommended then 2.0
 	else -1
 # merge the min and max ranges of the existing and new bracket
@@ -373,32 +385,32 @@ assign maxmax max maxbrk new_maxbrk
 assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
 # merge the expectation values of the existing and new bracket
 # workaround because division is missing
-assign peakavgmulfactor
-	if equal peakavgnum 0 then 1
-	else if equal peakavgnum 1 then 0.5
-	else if equal peakavgnum 2 then 0.3333
-	else if equal peakavgnum 3 then 0.25
-	else if equal peakavgnum 4 then 0.2
-	else if equal peakavgnum 5 then 0.1667
+assign expavgmulfactor
+	if equal expavgnum 0 then 1
+	else if equal expavgnum 1 then 0.5
+	else if equal expavgnum 2 then 0.3333
+	else if equal expavgnum 3 then 0.25
+	else if equal expavgnum 4 then 0.2
+	else if equal expavgnum 5 then 0.1667
 	else 0.1429
-assign peakcopy peakcurrent
-assign peakcurrent
-	# peak 1 is outside of the bracket
-	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
-		# peak 2 is outside the bracket, we assume the middle of the bracket
-		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
-		# peak 2 is inside the bracket, we use it
-		else new_peak	
-	# peak 1 is inside the bracket
+assign expcopy expcurrent
+assign expcurrent
+	# exp 1 is outside of the bracket
+	if or ( lesser expcurrent minbrk ) ( greater expcurrent maxbrk )
+		# exp 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# exp 2 is inside the bracket, we use it
+		else new_exp	
+	# exp 1 is inside the bracket
 	else
-		# peak 2 is outside the bracket, we use peak 1
-		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
-		# both peaks are inside the bracket, use the middle values of all peaks
-		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
-assign peakavgnum
-	# peak 1 and 2 are inside the bracket
-	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
-	else if equal new_peak -1 then peakavgnum
+		# exp 2 is outside the bracket, we use exp 1
+		if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then expcurrent
+		# both exps are inside the bracket, use the middle values of all exps
+		else multiply ( add ( multiply expcurrent expavgnum ) new_exp ) expavgmulfactor
+assign expavgnum
+	# exp 1 and 2 are inside the bracket
+	if and ( not or ( lesser expcopy minbrk ) ( greater expcopy maxbrk ) ) ( not or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) ) then add expavgnum 1
+	else if equal new_exp -1 then expavgnum
 	else 1
 
 	
@@ -445,31 +457,42 @@ assign new_maxbrk
 		else if surface=sett|cobblestone then 5.0
 		else if surface=grass then 3.0
 		else if surface=wood then 3.0
-		else if surface=mud|clay|sand then 9.0
+		else if surface=mud|clay|sand then 10000
 		else 10000
 	else if highway=unsurfaced then 9.0 
 	else 10001
-assign new_peak
+assign new_exp
 	if ( not surface= ) then
-		if surface=unpaved then 1.0
+		if and surface=unpaved iswet then 2.0
+		else if surface=unpaved then 1.0
 		else if surface=paved then 0.3
 		else if surface=asphalt then 0.1
 		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then 0.1
 		else if ( or concrete=lanes concrete=plates ) then 0.4
 		else if surface=paving_stones then 0.2
+		else if and surface=compacted|fine_gravel iswet then 0.5
 		else if surface=compacted|fine_gravel then 0.3
+		else if and surface=metal iswet then 0.8
 		else if surface=metal then 0.3
+		else if and surface=dirt|earth|ground iswet then 5.0
 		else if surface=dirt|earth|ground then 1.0
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
+		else if and surface=gravel and ( or is_cycleroute or highway=cycleway any_motoraccess ) iswet then 0.4
 		else if and surface=gravel ( or is_cycleroute or highway=cycleway any_motoraccess ) then 0.2
 		else if surface=gravel then 2.0
+		else if and surface=grass_paver iswet then 0.6
 		else if surface=grass_paver then 0.4
+		else if and surface=pebblestone iswet then 1.5
 		else if surface=pebblestone then 0.6
+		else if and surface=sett|cobblestone iswet then 2.0
 		else if surface=sett|cobblestone then 1.2
+		else if and surface=grass iswet then 3.0
 		else if surface=grass then 1.5
 		else if surface=wood then 1.0
+		else if and surface=mud|clay|sand iswet then 10000
 		else if surface=mud|clay|sand then 8.0
 		else 6.0
+	else if and highway=unsurfaced iswet then 2.0
 	else if highway=unsurfaced then 1.0
 	else -1
 
@@ -480,32 +503,32 @@ assign maxmax max maxbrk new_maxbrk
 assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
 # merge the expectation values of the existing and new bracket
 # workaround because division is missing
-assign peakavgmulfactor
-	if equal peakavgnum 0 then 1
-	else if equal peakavgnum 1 then 0.5
-	else if equal peakavgnum 2 then 0.3333
-	else if equal peakavgnum 3 then 0.25
-	else if equal peakavgnum 4 then 0.2
-	else if equal peakavgnum 5 then 0.1667
+assign expavgmulfactor
+	if equal expavgnum 0 then 1
+	else if equal expavgnum 1 then 0.5
+	else if equal expavgnum 2 then 0.3333
+	else if equal expavgnum 3 then 0.25
+	else if equal expavgnum 4 then 0.2
+	else if equal expavgnum 5 then 0.1667
 	else 0.1429
-assign peakcopy peakcurrent
-assign peakcurrent
-	# peak 1 is outside of the bracket
-	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
-		# peak 2 is outside the bracket, we assume the middle of the bracket
-		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
-		# peak 2 is inside the bracket, we use it
-		else new_peak	
-	# peak 1 is inside the bracket
+assign expcopy expcurrent
+assign expcurrent
+	# exp 1 is outside of the bracket
+	if or ( lesser expcurrent minbrk ) ( greater expcurrent maxbrk )
+		# exp 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# exp 2 is inside the bracket, we use it
+		else new_exp	
+	# exp 1 is inside the bracket
 	else
-		# peak 2 is outside the bracket, we use peak 1
-		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
-		# both peaks are inside the bracket, use the middle values of all peaks
-		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
-assign peakavgnum
-	# peak 1 and 2 are inside the bracket
-	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
-	else if equal new_peak -1 then peakavgnum
+		# exp 2 is outside the bracket, we use exp 1
+		if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then expcurrent
+		# both exps are inside the bracket, use the middle values of all exps
+		else multiply ( add ( multiply expcurrent expavgnum ) new_exp ) expavgmulfactor
+assign expavgnum
+	# exp 1 and 2 are inside the bracket
+	if and ( not or ( lesser expcopy minbrk ) ( greater expcopy maxbrk ) ) ( not or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) ) then add expavgnum 1
+	else if equal new_exp -1 then expavgnum
 	else 1
 
 # fallback to mountainbike scale
@@ -521,9 +544,10 @@ assign new_maxbrk
 		else if or mtb:scale=0 mtb:scale:uphill=0 then 2.0
 		else 10000
 	else 10001
-assign new_peak
+assign new_exp
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
-		if or mtb:scale=1 mtb:scale:uphill=1 then 3.0
+		if and ( or mtb:scale=1 mtb:scale:uphill=1 ) iswet then 9.0
+		else if or mtb:scale=1 mtb:scale:uphill=1 then 3.0
 		else if or mtb:scale=0 mtb:scale:uphill=0 then 1.2
 		else 10000
 	else -1
@@ -535,32 +559,32 @@ assign maxmax max maxbrk new_maxbrk
 assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
 # merge the expectation values of the existing and new bracket
 # workaround because division is missing
-assign peakavgmulfactor
-	if equal peakavgnum 0 then 1
-	else if equal peakavgnum 1 then 0.5
-	else if equal peakavgnum 2 then 0.3333
-	else if equal peakavgnum 3 then 0.25
-	else if equal peakavgnum 4 then 0.2
-	else if equal peakavgnum 5 then 0.1667
+assign expavgmulfactor
+	if equal expavgnum 0 then 1
+	else if equal expavgnum 1 then 0.5
+	else if equal expavgnum 2 then 0.3333
+	else if equal expavgnum 3 then 0.25
+	else if equal expavgnum 4 then 0.2
+	else if equal expavgnum 5 then 0.1667
 	else 0.1429
-assign peakcopy peakcurrent
-assign peakcurrent
-	# peak 1 is outside of the bracket
-	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
-		# peak 2 is outside the bracket, we assume the middle of the bracket
-		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
-		# peak 2 is inside the bracket, we use it
-		else new_peak	
-	# peak 1 is inside the bracket
+assign expcopy expcurrent
+assign expcurrent
+	# exp 1 is outside of the bracket
+	if or ( lesser expcurrent minbrk ) ( greater expcurrent maxbrk )
+		# exp 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# exp 2 is inside the bracket, we use it
+		else new_exp	
+	# exp 1 is inside the bracket
 	else
-		# peak 2 is outside the bracket, we use peak 1
-		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
-		# both peaks are inside the bracket, use the middle values of all peaks
-		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
-assign peakavgnum
-	# peak 1 and 2 are inside the bracket
-	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcopy maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
-	else if equal new_peak -1 then peakavgnum
+		# exp 2 is outside the bracket, we use exp 1
+		if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then expcurrent
+		# both exps are inside the bracket, use the middle values of all exps
+		else multiply ( add ( multiply expcurrent expavgnum ) new_exp ) expavgmulfactor
+assign expavgnum
+	# exp 1 and 2 are inside the bracket
+	if and ( not or ( lesser expcopy minbrk ) ( greater expcopy maxbrk ) ) ( not or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) ) then add expavgnum 1
+	else if equal new_exp -1 then expavgnum
 	else 1
 
 # fallback to hiking route classification
@@ -574,7 +598,7 @@ assign new_maxbrk
 		if sac_scale=hiking then 9.0 
 		else 10000
 	else 10001
-assign new_peak
+assign new_exp
 	if ( not sac_scale= ) then
 		if sac_scale=hiking then 1.5
 		else 10000
@@ -587,36 +611,36 @@ assign maxmax max maxbrk new_maxbrk
 assign maxbrk if equal minmax minbrk then minmax else if greater minmax minbrk then minmax else maxmax
 # merge the expectation values of the existing and new bracket
 # workaround because division is missing
-assign peakavgmulfactor
-	if equal peakavgnum 0 then 1
-	else if equal peakavgnum 1 then 0.5
-	else if equal peakavgnum 2 then 0.3333
-	else if equal peakavgnum 3 then 0.25
-	else if equal peakavgnum 4 then 0.2
-	else if equal peakavgnum 5 then 0.1667
+assign expavgmulfactor
+	if equal expavgnum 0 then 1
+	else if equal expavgnum 1 then 0.5
+	else if equal expavgnum 2 then 0.3333
+	else if equal expavgnum 3 then 0.25
+	else if equal expavgnum 4 then 0.2
+	else if equal expavgnum 5 then 0.1667
 	else 0.1429
-assign peakcopy peakcurrent
-assign peakcurrent
-	# peak 1 is outside of the bracket
-	if or ( lesser peakcurrent minbrk ) ( greater peakcurrent maxbrk )
-		# peak 2 is outside the bracket, we assume the middle of the bracket
-		then if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then multiply 0.5 add minbrk maxbrk
-		# peak 2 is inside the bracket, we use it
-		else new_peak	
-	# peak 1 is inside the bracket
+assign expcopy expcurrent
+assign expcurrent
+	# exp 1 is outside of the bracket
+	if or ( lesser expcurrent minbrk ) ( greater expcurrent maxbrk )
+		# exp 2 is outside the bracket, we assume the middle of the bracket
+		then if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then multiply 0.5 add minbrk maxbrk
+		# exp 2 is inside the bracket, we use it
+		else new_exp	
+	# exp 1 is inside the bracket
 	else
-		# peak 2 is outside the bracket, we use peak 1
-		if or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) then peakcurrent
-		# both peaks are inside the bracket, use the middle values of all peaks
-		else multiply ( add ( multiply peakcurrent peakavgnum ) new_peak ) peakavgmulfactor
-assign peakavgnum
-	# peak 1 and 2 are inside the bracket
-	if and ( not or ( lesser peakcopy minbrk ) ( greater peakcurrent maxbrk ) ) ( not or ( lesser new_peak minbrk ) ( greater new_peak maxbrk ) ) then add peakavgnum 1
-	else if equal new_peak -1 then peakavgnum
+		# exp 2 is outside the bracket, we use exp 1
+		if or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) then expcurrent
+		# both exps are inside the bracket, use the middle values of all exps
+		else multiply ( add ( multiply expcurrent expavgnum ) new_exp ) expavgmulfactor
+assign expavgnum
+	# exp 1 and 2 are inside the bracket
+	if and ( not or ( lesser expcopy minbrk ) ( greater expcurrent maxbrk ) ) ( not or ( lesser new_exp minbrk ) ( greater new_exp maxbrk ) ) then add expavgnum 1
+	else if equal new_exp -1 then expavgnum
 	else 1
 
 assign smoothness_cost
-	if greater peakavgnum 0 then peakcurrent
+	if greater expavgnum 0 then expcurrent
 	# no good indication of smoothness, fallback to make rough assumptions based on waytype
 	# waytypes that are likely in good condition, but add a little cost for unknown condition
 	else if and ( not is_cycleroute ) (
