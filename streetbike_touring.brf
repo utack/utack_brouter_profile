@@ -697,8 +697,7 @@ assign smoothness_cost
 
 assign traffic_cost
 	# many pedestrians but no cars expected
-	if or ( and  foot=designated ( not segregated=yes ) )
-		or ( and highway=footway|pedestrian ( not segregated=yes ) )
+	if or and highway=pedestrian ( not segregated=yes )
 		( highway=platform|corridor )
 		then traffic_tier1
 	# anything without motor vehicles is fine
