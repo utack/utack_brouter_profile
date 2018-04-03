@@ -466,7 +466,7 @@ assign new_exp
 		if and surface=unpaved iswet then 2.0
 		else if surface=unpaved then 1.0
 		else if surface=paved then 0.3
-		else if surface=asphalt then 0.1
+		else if surface=asphalt then 0.0
 		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then 0.1
 		else if ( or concrete=lanes concrete=plates ) then 0.4
 		else if surface=paving_stones then 0.2
