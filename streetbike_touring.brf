@@ -25,8 +25,8 @@ assign downhillcutoff 2.0
 
 assign traffic_tier1 0.1
 assign traffic_tier2 0.2
-assign traffic_tier3 0.6
-assign traffic_tier4 1.0
+assign traffic_tier3 0.5
+assign traffic_tier4 0.8
 
 assign speed_tier1 0.2
 assign speed_tier2 0.4
@@ -735,9 +735,9 @@ assign maxspeed_cost_raw
 		else 0.0
 	else if ( not highway= ) then
 		# very rough guess unfortunately
-		if highway=trunk|trunk_link then speed_tier2
-		else if highway=primary|primary_link then speed_tier1
-		else if highway=secondary|secondary_link then speed_tier1
+		if highway=trunk|trunk_link then speed_tier3
+		else if highway=primary|primary_link then speed_tier2
+		else if highway=secondary|secondary_link then speed_tier2
 		else 0.0
 	else 0.0
 
