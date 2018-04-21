@@ -20,18 +20,18 @@ assign considerTurnRestrictions true
 
 assign uphillcost 80
 assign uphillcutoff 0.5
-assign downhillcutoff 2.0
 assign downhillcost 100
+assign downhillcutoff 2.0
 
 assign traffic_tier1 0.1
 assign traffic_tier2 0.2
-assign traffic_tier3 0.4
-assign traffic_tier4 0.5
+assign traffic_tier3 0.6
+assign traffic_tier4 1.0
 
 assign speed_tier1 0.2
 assign speed_tier2 0.4
-assign speed_tier3 0.5
-assign speed_tier4 0.6
+assign speed_tier3 0.6
+assign speed_tier4 1.0
 
 
 
