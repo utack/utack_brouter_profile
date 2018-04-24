@@ -427,7 +427,7 @@ assign new_minbrk
 		else if surface=metal then 0.0
 		else if surface=dirt|earth|ground then 0.8
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel ( or is_cycleroute or highway=cycleway any_motoraccess ) then 0.2
+		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 0.2
 		else if surface=gravel then 0.2
 		else if surface=grass_paver then 0.4
 		else if surface=pebblestone then 0.4
@@ -450,7 +450,7 @@ assign new_maxbrk
 		else if surface=metal then 0.8
 		else if surface=dirt|earth|ground then 9.0
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel ( or is_cycleroute or highway=cycleway any_motoraccess ) then 1.0
+		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 1.0
 		else if surface=gravel then 9.0
 		else if surface=grass_paver then 0.8
 		else if surface=pebblestone then 3.0
@@ -477,9 +477,9 @@ assign new_exp
 		else if and surface=dirt|earth|ground iswet then 5.0
 		else if surface=dirt|earth|ground then 1.0
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel and ( or is_cycleroute or highway=cycleway any_motoraccess ) iswet then 0.4
-		else if and surface=gravel ( or is_cycleroute or highway=cycleway any_motoraccess ) then 0.2
-		else if surface=gravel then 2.0
+		else if and surface=gravel and ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) iswet then 0.5
+		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 0.3
+		else if surface=gravel then 3.0
 		else if and surface=grass_paver iswet then 0.6
 		else if surface=grass_paver then 0.4
 		else if and surface=pebblestone iswet then 1.5
