@@ -536,7 +536,7 @@ assign new_minbrk
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
 		if or mtb:scale=1 mtb:scale:uphill=1 then 1.0
 		else if or mtb:scale=0 mtb:scale:uphill=0 then -0.2
-		else -0.2
+		else 10000
 	else -1
 assign new_maxbrk
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
