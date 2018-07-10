@@ -683,10 +683,10 @@ assign smoothness_cost
 	# probably not too bad smoothness when dedicated for bike
 	else if bicycle=designated then 0.2
 	# tracks are usualy slightly compacted, paths often grass or loose ground
-	else if and highway=track|byway iswet then 2.0
-	else if highway=track|byway then 0.8
-	else if and highway=path iswet then 3.0
-	else if highway=path then 1.0
+	else if and highway=track|byway iswet then 3.0
+	else if highway=track|byway then 1.2
+	else if and highway=path iswet then 5.0
+	else if highway=path then 2.0
 	else 1.5
 
 
