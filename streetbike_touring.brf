@@ -782,7 +782,7 @@ assign maxspeed_cost if hascycleway then ( max 0.0 ( sub maxspeed_cost_raw speed
 assign oneway_cost =
 	if badoneway then
 		if greater traffic_cost traffic_tier2 then 20
-		else 9
+		else bikepushcost
 	else 0
 
 ################################################################
