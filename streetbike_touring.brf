@@ -81,7 +81,8 @@ assign is_cycleroute_other
 	or route_bicycle_ncn=proposed
 	or lcn=proposed
 	or rcn=proposed
-	ncn=proposed
+	or ncn=proposed
+	bicycle=designated
 	
 
 
