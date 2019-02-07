@@ -38,8 +38,6 @@ assign uphillcutoff 0.5
 assign downhillcost 100
 assign downhillcutoff 2.0
 
-
-
 assign traffic_tier1 0.1
 assign traffic_tier2 0.2
 assign traffic_tier3 0.5
@@ -83,8 +81,6 @@ assign is_cycleroute_other
 	or rcn=proposed
 	or ncn=proposed
 	bicycle=designated
-	
-
 
 
 # Determine if we are driving against a oneway
@@ -191,7 +187,7 @@ assign any_motoraccess
 		highway=driveway|mini_roundabout|turning_loop|unsurfaced )
 		then true
 	else false
-	
+
 assign bikeaccess
 	if ( not route=ferry ) then
 		if bicycle=yes|designated|permissive|destination|mtb then true
@@ -266,6 +262,10 @@ assign initialclassifier
 
 
 ################################################################
+#  Calculation of contributing factors to waycost begins here  #
+################################################################
+
+################################################################
 #   Determine which roads can even be considered for routing   #
 ################################################################
 
@@ -274,7 +274,8 @@ assign access_cost
 	else if bikeaccess then 0
 	# pushing the bike 
 	else if footaccess then bikepushcost
-	else 10000
+	else avoidway
+
 
 ################################################################
 #                  Determine road condition                    #
@@ -283,11 +284,10 @@ assign access_cost
 #     a bracket with range from minimum possible (minbrk)      #
 #     to maximum possible (maxbrk) and the most likely         #
 #     (exp) penatly is specified.                              #
-#     These multiple brackets are then merged to one           #
+#     These multiple brackets are then merged to one.          #
 #     For example [0...0.8...1.8] and [0.5...1.0...2.0]        #
 #     is merged to [0.5...0.9...1.8] giving 0.9 penalty        #
 ################################################################
-
 
 assign minbrk -0.2
 assign maxbrk 10001
@@ -443,7 +443,7 @@ assign expavgnum
 	else if equal new_exp -1 then expavgnum
 	else 1
 
-	
+
 # the surface is great indicator for smoothness
 assign new_minbrk
 	if ( not surface= ) then
@@ -724,7 +724,6 @@ assign smoothness_cost
 #                       Traffic Penalty                        #
 ################################################################
 
-
 assign traffic_cost
 	# many pedestrians but no cars expected
 	if or and highway=pedestrian ( not segregated=yes )
@@ -750,11 +749,9 @@ assign traffic_cost
 	else 0.0
 
 
-
 ################################################################
 #                       Maxspeed Penalty                       #
 ################################################################
-
 
 assign maxspeed_cost_raw
 	if ( not maxspeed= ) then
@@ -784,6 +781,7 @@ assign oneway_cost =
 		if greater traffic_cost traffic_tier2 then 20
 		else bikepushcost
 	else 0
+
 
 ################################################################
 #                     Inital and Turn Cost                     #
@@ -816,7 +814,8 @@ assign turncost
 #      Roads that are part of a cycleroute are preferred       #
 ################################################################
 
-# We go 20% extra way, if it means we are on an official cycleroute, or 10% for proposed cycle routes
+# We go 20% extra way, if it means we are on an official cycleroute
+# and 10% for proposed cycle routes or bicycle=designated ways
 assign cycleroute_cost
 	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.10 else 0.20
 	else if class:bicycle=-3 then 3.0
@@ -835,6 +834,8 @@ assign cycleroute_cost
 assign costfactor
 	if ferryaccess then access_cost
 	else max ( add 1.0 add access_cost add smoothness_cost add traffic_cost add maxspeed_cost add oneway_cost cycleroute_cost ) 1.0
+
+
 
 
 ---context:node
@@ -863,6 +864,9 @@ assign footaccess
 	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|unknown then false
 	else true
 
+################################################################
+# Calculation of contributing factors to nodecost begins here  #
+################################################################
 
 ################################################################
 #             Determine which points influence us              #
