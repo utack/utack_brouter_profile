@@ -897,7 +897,7 @@ assign node_cost =
 
 
 ################################################################
-#               Final Way Costfactor Calculation               #
+#               Final Node Costfactor Calculation              #
 ################################################################
 
 assign initialcost add access_cost node_cost
