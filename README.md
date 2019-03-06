@@ -3,7 +3,7 @@
 All data used for bike routing with BRouter (found at https://github.com/abrensch/brouter ) 
 At the moment it contains a BRouter profile  
 
-:arrow_forward::arrow_forward::arrow_forward: Please note: At the moment the a file that ships with BRouter is not fully updated.
+:arrow_forward::arrow_forward::arrow_forward: Please note: At the moment the a file that ships with BRouter is not fully updated.  
 :arrow_forward::arrow_forward::arrow_forward: You need to manually copy [lookups.dat](https://github.com/abrensch/brouter/blob/master/misc/profiles2/lookups.dat) into the "profiles2" folder, overwriting the previous version.
 
 
