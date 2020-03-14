@@ -20,7 +20,7 @@ assign consider_ferries true
 # switch road side we drive on
 assign lefthandtraffic false
 # switch to assume surfaces are wet
-assign iswet false
+assign is_wet false # %is_wet% | Wet conditions | boolean
 # switch to take some paths that are technically not allowed (access forestry, destination etc.)
 assign looseaccessrules true
 # the cost for pushing the bike instead of riding it
@@ -332,15 +332,15 @@ assign new_exp
 		if smoothness=excellent then -0.2
 		else if smoothness=very_good then -0.1
 		else if smoothness=good then 0.0
-		else if and smoothness=intermediate|medium iswet then 0.5
+		else if and smoothness=intermediate|medium is_wet then 0.5
 		else if smoothness=intermediate|medium then 0.3
-		else if and smoothness=bad|robust_wheels|poor iswet then 2.0
+		else if and smoothness=bad|robust_wheels|poor is_wet then 2.0
 		else if smoothness=bad|robust_wheels|poor then 1.2
-		else if and smoothness=very_bad|high_clearance|rough iswet then 5.0
+		else if and smoothness=very_bad|high_clearance|rough is_wet then 5.0
 		else if smoothness=very_bad|high_clearance|rough then 2.0
-		else if and smoothness=horrible|off_road_wheels iswet then bikepushcost
+		else if and smoothness=horrible|off_road_wheels is_wet then bikepushcost
 		else if smoothness=horrible|off_road_wheels then 8.0
-		else if and smoothness=very_horrible|impassable iswet then avoidway
+		else if and smoothness=very_horrible|impassable is_wet then avoidway
 		else if smoothness=very_horrible|impassable then bikepushcost
 		else 6.0
 	else -1
@@ -404,16 +404,16 @@ assign new_maxbrk
 assign new_exp
 	if ( not tracktype= ) then
 		if tracktype=grade1 then 0.1
-		else if and tracktype=grade2 iswet then 0.6
+		else if and tracktype=grade2 is_wet then 0.6
 		else if tracktype=grade2 then 0.3
-		else if and tracktype=grade3 iswet then 1.2
+		else if and tracktype=grade3 is_wet then 1.2
 		else if tracktype=grade3 then 0.5
-		else if and tracktype=grade4 iswet then 2.0
+		else if and tracktype=grade4 is_wet then 2.0
 		else if tracktype=grade4 then 1.2
-		else if and tracktype=grade5 iswet then 6.0
+		else if and tracktype=grade5 is_wet then 6.0
 		else if tracktype=grade5 then 2.0
 		else 6.0
-	else if and 4wd_only=yes|recommended iswet then 6.0
+	else if and 4wd_only=yes|recommended is_wet then 6.0
 	else if 4wd_only=yes|recommended then 2.0
 	else -1
 # merge the min and max ranges of the existing and new bracket
@@ -501,36 +501,36 @@ assign new_maxbrk
 	else 10001
 assign new_exp
 	if ( not surface= ) then
-		if and surface=unpaved iswet then 2.0
+		if and surface=unpaved is_wet then 2.0
 		else if surface=unpaved then 1.0
 		else if surface=paved then 0.3
 		else if surface=asphalt then 0.0
 		else if and surface=concrete ( and not concrete=plates not concrete=lanes ) then 0.1
 		else if ( or concrete=lanes concrete=plates ) then 0.4
 		else if surface=paving_stones then 0.2
-		else if and surface=compacted|fine_gravel iswet then 0.5
+		else if and surface=compacted|fine_gravel is_wet then 0.5
 		else if surface=compacted|fine_gravel then 0.3
-		else if and surface=metal iswet then 0.8
+		else if and surface=metal is_wet then 0.8
 		else if surface=metal then 0.3
-		else if and surface=dirt|earth|ground iswet then 5.0
+		else if and surface=dirt|earth|ground is_wet then 5.0
 		else if surface=dirt|earth|ground then 1.0
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel and ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) iswet then 0.5
+		else if and surface=gravel and ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) is_wet then 0.5
 		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 0.3
 		else if surface=gravel then 3.0
-		else if and surface=grass_paver iswet then 0.6
+		else if and surface=grass_paver is_wet then 0.6
 		else if surface=grass_paver then 0.4
-		else if and surface=pebblestone iswet then 1.5
+		else if and surface=pebblestone is_wet then 1.5
 		else if surface=pebblestone then 0.6
-		else if and surface=sett|cobblestone iswet then 2.0
+		else if and surface=sett|cobblestone is_wet then 2.0
 		else if surface=sett|cobblestone then 1.2
-		else if and surface=grass iswet then 3.0
+		else if and surface=grass is_wet then 3.0
 		else if surface=grass then 1.5
 		else if surface=wood then 1.0
-		else if and surface=mud|clay|sand iswet then avoidway
+		else if and surface=mud|clay|sand is_wet then avoidway
 		else if surface=mud|clay|sand then 8.0
 		else 6.0
-	else if and highway=unsurfaced iswet then 2.0
+	else if and highway=unsurfaced is_wet then 2.0
 	else if highway=unsurfaced then 1.0
 	else -1
 
@@ -584,7 +584,7 @@ assign new_maxbrk
 	else 10001
 assign new_exp
 	if or ( not mtb:scale= ) ( not mtb:scale:uphill= ) then
-		if and ( or mtb:scale=1 mtb:scale:uphill=1 ) iswet then bikepushcost
+		if and ( or mtb:scale=1 mtb:scale:uphill=1 ) is_wet then bikepushcost
 		else if or mtb:scale=1 mtb:scale:uphill=1 then 3.0
 		else if or mtb:scale=0 mtb:scale:uphill=0 then 1.2
 		else avoidway
@@ -721,9 +721,9 @@ assign smoothness_cost
 	# probably not too bad smoothness when dedicated for bike
 	else if bicycle=designated then 0.2
 	# tracks are usualy slightly compacted, paths often grass or loose ground
-	else if and highway=track|byway iswet then 3.0
+	else if and highway=track|byway is_wet then 3.0
 	else if highway=track|byway then 1.2
-	else if and highway=path iswet then 5.0
+	else if and highway=path is_wet then 5.0
 	else if highway=path then 2.0
 	else 1.5
 
