@@ -2,9 +2,7 @@
   
 A profile for bike routing with BRouter (found at https://github.com/abrensch/brouter )  
   
-  
-:arrow_forward::arrow_forward::arrow_forward: Please note: At the moment a file that ships with BRouter is not fully updated.  
-:arrow_forward::arrow_forward::arrow_forward: You need to manually copy [lookups.dat](https://github.com/abrensch/brouter/blob/master/misc/profiles2/lookups.dat) into the "profiles2" folder, overwriting the previous version.  
+
   
 ![The profile in action](https://i.imgur.com/m71uavj.jpg)  
   
