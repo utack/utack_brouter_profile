@@ -27,7 +27,7 @@ assign looseaccessrules true
 # 9.0 means we use 10x the cost for this
 assign bikepushcost 9.0
 
-assign turnInstructionMode 0
+assign turnInstructionMode 1
 assign validForBikes 1
 assign pass1coefficient 1
 assign pass2coefficient -1
@@ -60,8 +60,30 @@ assign speed_tier4 1.0
 #   A bunch of helper-stuff before the actual waycost logic    #
 ################################################################
 
-# Needed for some unknown reason, usualy only used for voice hints
-assign priorityclassifier = if highway= then 1 else 0  
+# For navigation hints
+assign priorityclassifier = (
+
+  if      ( highway=motorway                  ) then  30
+  else if ( highway=motorway_link             ) then  29
+  else if ( highway=trunk                     ) then  28
+  else if ( highway=trunk_link                ) then  27
+  else if ( highway=primary                   ) then  26
+  else if ( highway=primary_link              ) then  25
+  else if ( highway=secondary                 ) then  24
+  else if ( highway=secondary_link            ) then  23
+  else if ( highway=tertiary                  ) then  22
+  else if ( highway=tertiary_link             ) then  21
+  else if ( highway=unclassified              ) then  20
+  else if ( highway=residential|living_street ) then  16
+  else if ( highway=service                   ) then  14
+  else if ( tracktype=grade1                  ) then  6
+  else if ( highway=cycleway                  ) then  6
+  else if ( bicycle=designated                ) then  6
+  else if ( highway=bridleway                 ) then  4
+  else if ( highway=track|road|footway        ) then  4
+  else if ( highway=steps|path|pedestrian     ) then  2
+  else 0
+)
 
 # Determine if way is part of a cycleroute
 assign is_cycleroute
