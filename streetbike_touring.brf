@@ -754,6 +754,20 @@ assign smoothness_cost
 #                       Traffic Penalty                        #
 ################################################################
 
+assign low_traffic
+	if bicycle=designated then 1.0
+	else if motorcar=yes|permissive|designated then 0.0
+	else if motorcycle=yes|permissive|designated then 0.0
+	else if hgv=yes|permissive|delivery|destination|designated then 0.0
+	else if motor_vehicle=yes|permissive|designated then 0.0
+	else if motor_vehicle=no|private|agricultural|destination|emergency then 1.0
+	else if vehicle=yes|permissive|designated then 0.0
+	else if vehicle=no|private|agricultural|destination then 1.0
+	else if access= then 0.0
+	else if access=yes|permissive then 0.0
+	else 1.0
+	
+
 assign traffic_cost
 	# many pedestrians but no cars expected
 	if or and highway=pedestrian ( not segregated=yes )
@@ -761,11 +775,12 @@ assign traffic_cost
 		then traffic_tier1
 	# anything without motor vehicles is fine
 	else if not any_motoraccess then 0.0
+	else if low_traffic then 0.0
 	# 3+ lanes = lots of expected traffic
 	else if and ( and oneway=yes|true|1|-1 lanes=3|4|5|6|7 ) ( not hascycleway ) then traffic_tier4
 	else if and lanes=5|6|7  ( not hascycleway ) then traffic_tier4
-	# a way specifically designed for bikes probably has no traffic
-	else if ( and bicycle=designated ( not segregated=no ) ) then 0.0
+	# no one likes HGVs
+	else if hgv=designated then traffic_tier4
 	# wild traffic guesses based on roadtype only
 	else if not hascycleway then
 		if highway=motorway|motorway_link|trunk|trunk_link|primary|primary_link then traffic_tier4
@@ -847,7 +862,7 @@ assign turncost
 # We go 20% extra way, if it means we are on an official cycleroute
 # and 10% for proposed cycle routes or bicycle=designated ways
 assign cycleroute_cost
-	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.10 else 0.20
+	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.15 else 0.20
 	else if class:bicycle=-3 then 3.0
 	else if class:bicycle=-2 then 1.0
 	else if class:bicycle=-1 then 0.4
