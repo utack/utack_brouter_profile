@@ -215,7 +215,8 @@ assign any_motoraccess
 
 assign bikeaccess
 	if ( not route=ferry ) then
-		if bicycle=yes|designated|permissive|mtb then true
+		if highway=construction then false
+		else if bicycle=yes|designated|permissive|mtb then true
 		else if and bicycle=destination|dismount looseaccessrules then true
 		else if bicycle=no|private|use_sidepath|destination|dismount then false
 		else if vehicle=yes|permissive|designated then true
@@ -238,7 +239,8 @@ assign bikeaccess
 
 assign footaccess
 	if ( not route=ferry ) then
-		if foot=yes|designated|permissive then true
+		if highway=construction then false
+		else if foot=yes|designated|permissive then true
 		else if and foot=destination looseaccessrules then true
 		else if foot=no|private|use_sidepath then false
 		else if bicycle=dismount then true
@@ -755,17 +757,17 @@ assign smoothness_cost
 ################################################################
 
 assign low_traffic
-	if bicycle=designated then 1.0
-	else if motorcar=yes|permissive|designated then 0.0
-	else if motorcycle=yes|permissive|designated then 0.0
-	else if hgv=yes|permissive|delivery|destination|designated then 0.0
-	else if motor_vehicle=yes|permissive|designated then 0.0
-	else if motor_vehicle=no|private|agricultural|destination|emergency then 1.0
-	else if vehicle=yes|permissive|designated then 0.0
-	else if vehicle=no|private|agricultural|destination then 1.0
-	else if access= then 0.0
-	else if access=yes|permissive then 0.0
-	else 1.0
+	if bicycle=designated then true
+	else if motorcar=yes|permissive|designated then false
+	else if motorcycle=yes|permissive|designated then false
+	else if hgv=yes|permissive|delivery|destination|designated then false
+	else if motor_vehicle=yes|permissive|designated then false
+	else if motor_vehicle=no|private|agricultural|destination|emergency then false
+	else if vehicle=yes|permissive|designated then false
+	else if vehicle=no|private|agricultural|destination then true
+	else if access= then false
+	else if access=yes|permissive then false
+	else true
 	
 
 assign traffic_cost
@@ -860,7 +862,7 @@ assign turncost
 ################################################################
 
 # We go 20% extra way, if it means we are on an official cycleroute
-# and 10% for proposed cycle routes or bicycle=designated ways
+# and 15% for proposed cycle routes or bicycle=designated ways
 assign cycleroute_cost
 	if class:bicycle= then if is_cycleroute then 0.0 else if is_cycleroute_other then 0.15 else 0.20
 	else if class:bicycle=-3 then 3.0
