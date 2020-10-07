@@ -216,16 +216,17 @@ assign any_motoraccess
 assign bikeaccess
 	if ( not route=ferry ) then
 		if highway=construction then false
+		else if highway=steps then false
 		else if bicycle=yes|designated|permissive|mtb then true
 		else if and bicycle=destination|dismount looseaccessrules then true
-		else if bicycle=no|private|use_sidepath|destination|dismount then false
+		else if bicycle=no|private|use_sidepath|destination|dismount|unknown then false
 		else if vehicle=yes|permissive|designated then true
 		else if and vehicle=destination|agricultural|psv looseaccessrules then true
-		else if vehicle=no|private|destination|agricultural|psv then false
+		else if vehicle=no|private|destination|agricultural|psv|unknown then false
 		else if and indoor=yes not highway=cycleway then false
 		else if access=yes|permissive|designated then true
 		else if and access=destination|agricultural|customers|delivery|psv looseaccessrules then true
-		else if access=private|no|destination|agricultural|customers|delivery|psv  then false
+		else if access=private|no|destination|agricultural|customers|delivery|psv|unknown  then false
 		# no explicit access rules, make assumptions based on waytype
 		else if
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
@@ -242,11 +243,13 @@ assign footaccess
 		if highway=construction then false
 		else if foot=yes|designated|permissive then true
 		else if and foot=destination looseaccessrules then true
-		else if foot=no|private|use_sidepath then false
+		else if foot=no|private|use_sidepath|unknown then false
 		else if bicycle=dismount then true
 		else if access=yes|permissive|designated then true
 		else if and access=destination|agricultural|customers|delivery looseaccessrules then true
-		else if access=private|no|destination|agricultural|customers|delivery then false
+		else if access=private|no|destination|agricultural|customers|delivery|unknown then false
+		else if and highway=steps bicycle=yes|designated|permissive|mtb then true
+		else if and highway=steps and bicycle=destination looseaccessrules then true
 		# no explicit access rules, make assumptions based on waytype
 		else if
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
@@ -259,7 +262,7 @@ assign footaccess
 	else false
 
 assign ferryaccess
-	if and route=ferry and ( not bicycle=no|private ) consider_ferries then true
+	if and route=ferry and ( not bicycle=no|private|unknown ) consider_ferries then true
 	else false
 
 
@@ -892,28 +895,30 @@ assign costfactor
 ################################################################
 
 assign bikeaccess
-	if bicycle=yes|designated|permissive then true
+	if highway=steps then false
+	else if bicycle=yes|designated|permissive then true
 	else if and bicycle=destination|dismount looseaccessrules then true
-	else if bicycle=no|private|destination|dismount then false
+	else if bicycle=no|private|destination|dismount|unknown then false
 	else if vehicle=yes|permissive|designated then true
 	else if and vehicle=destination|agricultural looseaccessrules then true
-	else if vehicle=no|private|destination|agricultural then false
+	else if vehicle=no|private|destination|agricultural|unknown then false
 	else if access=yes|permissive|designated then true
 	else if and access=destination|agricultural looseaccessrules then true
-	else if access=private|no|destination|agricultural then false
+	else if access=private|no|destination|agricultural|unknown then false
 	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|lift_gate|cycle_barrier|toll_booth|border_control|chain|fallen_tree|checkpoint|rope|log|kissing_gate|bump_gate|horse_stile|tree|motorcycle_barrier|guard_rail|bar|jersey_barrier|unknown then false
-	else if highway=steps then false
 	else true
 
 assign footaccess
 	if foot=yes|designated|permissive then true
 	else if and foot=destination looseaccessrules then true
-	else if foot=no|private|destination then false
-	else if bicycle=dismount then true
+	else if foot=no|private|destination|unknown then false
+	else if and highway=steps bicycle=yes|designated|permissive then true
+	else if and highway=steps and bicycle=destination|dismount looseaccessrules then true
 	else if access=yes|permissive|designated then true
 	else if and access=destination|agricultural looseaccessrules then true
-	else if access=private|no|destination|agricultural then false
+	else if access=private|no|destination|agricultural|unknown then false
 	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|unknown then false
+	else if bicycle=dismount then true
 	else true
 
 ################################################################
