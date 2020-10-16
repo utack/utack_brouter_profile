@@ -16,7 +16,7 @@
 # Please set the switches directly below this comment as needed
 
 # switch to choose if ferries are considered in routing
-assign consider_ferries true
+assign allow_ferries true # %allow_ferries% | set to false to disallow ferries | boolean
 # switch road side we drive on
 assign lefthandtraffic false
 # switch to assume surfaces are wet
@@ -105,6 +105,7 @@ assign is_cycleroute_other
 	or lcn=proposed
 	or rcn=proposed
 	or ncn=proposed
+	or bicycle_road=yes
 	bicycle=designated
 
 
@@ -215,39 +216,39 @@ assign any_motoraccess
 
 assign bikeaccess
 	if ( not route=ferry ) then
-		if highway=construction then false
+		if or highway=construction not construction= then false
 		else if highway=steps then false
 		else if bicycle=yes|designated|permissive|mtb then true
 		else if and bicycle=destination|dismount looseaccessrules then true
-		else if bicycle=no|private|use_sidepath|destination|dismount|unknown then false
+		else if not bicycle= then false
 		else if vehicle=yes|permissive|designated then true
 		else if and vehicle=destination|agricultural|psv looseaccessrules then true
-		else if vehicle=no|private|destination|agricultural|psv|unknown then false
+		else if not vehicle= then false
 		else if and indoor=yes not highway=cycleway then false
 		else if access=yes|permissive|designated then true
 		else if and access=destination|agricultural|customers|delivery|psv looseaccessrules then true
-		else if access=private|no|destination|agricultural|customers|delivery|psv|unknown  then false
+		else if not access=  then false
 		# no explicit access rules, make assumptions based on waytype
 		else if
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
 			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 			or highway=driveway|mini_roundabout|turning_loop
 			or highway=track|path|cycleway|crossing|byway|unsurfaced
-			( and highway=footway|pedestrian is_cycleroute )
+			( and highway=footway|pedestrian ( or is_cycleroute is_cycleroute_other ) )
 			then true
 		else false
 	else false
 
 assign footaccess
 	if ( not route=ferry ) then
-		if highway=construction then false
+		if or highway=construction not construction= then false
 		else if foot=yes|designated|permissive then true
 		else if and foot=destination looseaccessrules then true
-		else if foot=no|private|use_sidepath|unknown then false
+		else if not foot= then false
 		else if bicycle=dismount then true
 		else if access=yes|permissive|designated then true
 		else if and access=destination|agricultural|customers|delivery looseaccessrules then true
-		else if access=private|no|destination|agricultural|customers|delivery|unknown then false
+		else if not access= then false
 		else if and highway=steps bicycle=yes|designated|permissive|mtb then true
 		else if and highway=steps and bicycle=destination looseaccessrules then true
 		# no explicit access rules, make assumptions based on waytype
@@ -262,7 +263,7 @@ assign footaccess
 	else false
 
 assign ferryaccess
-	if and route=ferry and ( not bicycle=no|private|unknown ) consider_ferries then true
+	if and route=ferry and ( not bicycle=no|private|unknown ) allow_ferries then true
 	else false
 
 
@@ -325,7 +326,7 @@ assign access_cost
 ################################################################
 
 assign minbrk -0.2
-assign maxbrk 10001
+assign maxbrk add avoidway 1
 assign expcurrent -1
 assign expavgnum 0
 
@@ -424,9 +425,9 @@ assign new_maxbrk
 		else if tracktype=grade2 then 0.6
 		else if tracktype=grade3 then 1.0
 		else if tracktype=grade4 then 2.0
-		else if tracktype=grade5 then 6.0
+		else if tracktype=grade5 then bikepushcost
 		else avoidway
-	else if 4wd_only=yes|recommended then 6.0
+	else if 4wd_only=yes|recommended then bikepushcost
 	else 10001
 assign new_exp
 	if ( not tracktype= ) then
@@ -435,12 +436,11 @@ assign new_exp
 		else if tracktype=grade2 then 0.3
 		else if and tracktype=grade3 is_wet then 1.2
 		else if tracktype=grade3 then 0.5
-		else if and tracktype=grade4 is_wet then 2.0
+		else if and tracktype=grade4 is_wet then 2.5
 		else if tracktype=grade4 then 1.2
-		else if and tracktype=grade5 is_wet then 6.0
-		else if tracktype=grade5 then 2.0
+		else if tracktype=grade5 then bikepushcost
 		else 6.0
-	else if and 4wd_only=yes|recommended is_wet then 6.0
+	else if and 4wd_only=yes|recommended is_wet then bikepushcost
 	else if 4wd_only=yes|recommended then 2.0
 	else -1
 # merge the min and max ranges of the existing and new bracket
@@ -492,7 +492,7 @@ assign new_minbrk
 		else if surface=metal then 0.0
 		else if surface=dirt|earth|ground then 0.8
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 0.2
+		else if and surface=gravel ( or is_cycleroute or is_cycleroute_other or highway=cycleway any_motoraccess ) then 0.2
 		else if surface=gravel then 0.2
 		else if surface=grass_paver then 0.4
 		else if surface=pebblestone then 0.4
@@ -515,7 +515,7 @@ assign new_maxbrk
 		else if surface=metal then 0.8
 		else if surface=dirt|earth|ground then bikepushcost
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 1.0
+		else if and surface=gravel ( or is_cycleroute or is_cycleroute_other or highway=cycleway any_motoraccess ) then 1.0
 		else if surface=gravel then avoidway
 		else if surface=grass_paver then 0.8
 		else if surface=pebblestone then 3.0
@@ -542,8 +542,8 @@ assign new_exp
 		else if and surface=dirt|earth|ground is_wet then 5.0
 		else if surface=dirt|earth|ground then 1.0
 		# gravel is often confused with fine_gravel, assume gravel means fine gravel on cycle/car routes
-		else if and surface=gravel and ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) is_wet then 0.5
-		else if and surface=gravel ( or is_cycleroute or highway=cycleway or bicycle=designated any_motoraccess ) then 0.3
+		else if and surface=gravel and ( or is_cycleroute or is_cycleroute_other or highway=cycleway any_motoraccess ) is_wet then 0.5
+		else if and surface=gravel ( or is_cycleroute or is_cycleroute_other or highway=cycleway any_motoraccess ) then 0.3
 		else if surface=gravel then 3.0
 		else if and surface=grass_paver is_wet then 0.6
 		else if surface=grass_paver then 0.4
@@ -761,6 +761,8 @@ assign smoothness_cost
 
 assign low_traffic
 	if bicycle=designated then true
+	else if living_street=yes then true
+	else if bicycle_road=yes then true
 	else if motorcar=yes|permissive|designated then false
 	else if motorcycle=yes|permissive|designated then false
 	else if hgv=yes|permissive|delivery|destination|designated then false
@@ -898,25 +900,25 @@ assign bikeaccess
 	if highway=steps then false
 	else if bicycle=yes|designated|permissive then true
 	else if and bicycle=destination|dismount looseaccessrules then true
-	else if bicycle=no|private|destination|dismount|unknown then false
+	else if not bicycle= then false
 	else if vehicle=yes|permissive|designated then true
 	else if and vehicle=destination|agricultural looseaccessrules then true
-	else if vehicle=no|private|destination|agricultural|unknown then false
+	else if not vehicle= then false
 	else if access=yes|permissive|designated then true
 	else if and access=destination|agricultural looseaccessrules then true
-	else if access=private|no|destination|agricultural|unknown then false
+	else if not access= then false
 	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|lift_gate|cycle_barrier|toll_booth|border_control|chain|fallen_tree|checkpoint|rope|log|kissing_gate|bump_gate|horse_stile|tree|motorcycle_barrier|guard_rail|bar|jersey_barrier|unknown then false
 	else true
 
 assign footaccess
 	if foot=yes|designated|permissive then true
 	else if and foot=destination looseaccessrules then true
-	else if foot=no|private|destination|unknown then false
+	else if not foot= then false
 	else if and highway=steps bicycle=yes|designated|permissive then true
 	else if and highway=steps and bicycle=destination|dismount looseaccessrules then true
 	else if access=yes|permissive|designated then true
 	else if and access=destination|agricultural looseaccessrules then true
-	else if access=private|no|destination|agricultural|unknown then false
+	else if not access= then false
 	else if barrier=gate|fence|yes|wall|hedge|obstacle|spikes|door|barrier|debris|ditch|turnstile|stile|swing_gate|hampshire_gate|full-height_turnstile|windfall|footgate|unknown then false
 	else if bicycle=dismount then true
 	else true
