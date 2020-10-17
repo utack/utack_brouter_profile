@@ -14,27 +14,31 @@
 ---context:global
 
 # Please set the switches directly below this comment as needed
-
+# standard switches
 # switch to choose if ferries are considered in routing
 assign allow_ferries true # %allow_ferries% | set to false to disallow ferries | boolean
-# switch road side we drive on
-assign lefthandtraffic false
 # switch to assume surfaces are wet
 assign is_wet false # %is_wet% | Wet conditions | boolean
+# switch to allow carrying over steps
+assign allow_steps true   # %allow_steps% | Set to false to disallow steps | boolean
+# custom parameters for this profile only
 # switch to take some paths that are technically not allowed (access forestry, destination etc.)
 assign looseaccessrules true
+# switch road side we drive on
+assign lefthandtraffic false
+
 # the cost for pushing the bike instead of riding it
 # 9.0 means we use 10x the cost for this
 assign bikepushcost 9.0
+# for better readability only
+assign avoidway 10000
+assign avoidnode 1000000
 
 assign turnInstructionMode 1
 assign validForBikes 1
 assign pass1coefficient 1
 assign pass2coefficient -1
 assign considerTurnRestrictions true
-
-assign avoidway 10000
-assign avoidnode 1000000
 
 assign uphillcost 80
 assign uphillcutoff 0.5
@@ -167,31 +171,31 @@ assign badoneway =
 # The logic should cover any cycleway tag situation found in OSM data
 assign hascycleway
 	# cycleway in both directions
-	if and ( not cycleway= ) ( not cycleway=left|right|no|none|opposite|proposed ) then true
+	if and ( not cycleway= ) ( not cycleway=left|right|no|none|opposite|proposed|unknown ) then true
 	else if
-	and ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) ) ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) )
+	and ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) ) ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) )
 	then true
 	else if ( or cycleway:right:oneway=no cycleway:left:oneway=no ) then true
 	# not a cycleway in any direction
 	else if
-	and ( or cycleway= cycleway=no|none|proposed ) and ( or cycleway:left= cycleway:left=no|sidepath ) ( or cycleway:right= cycleway:right=no|sidepath )
+	and ( or cycleway= cycleway=no|none|proposed|unknown ) and ( or cycleway:left= cycleway:left=no|sidepath|unknown ) ( or cycleway:right= cycleway:right=no|sidepath|unknown )
 	then false
 	# oneway street stuff
 	else if ( and oneway=yes|true|1|-1 reversedirection=yes ) then
 		if and oneway=yes|true|1 ( or cycleway=opposite_lane|opposite_track or cycleway:left=opposite_lane|opposite_track cycleway:right=opposite_lane|opposite_track ) then true
-		else if and oneway=-1 ( or ( and ( not cycleway= ) ( not cycleway=left|right|no|none|opposite|proposed ) ) or ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) )  ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) ) ) then true
+		else if and oneway=-1 ( or ( and ( not cycleway= ) ( not cycleway=left|right|no|none|opposite|proposed|unknown ) ) or ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) )  ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) ) ) then true
 		else false
 	else if ( and oneway=yes|true|1|-1 ( not reversedirection=yes ) ) then
-		if and oneway=yes|true|1 ( or ( and ( not cycleway= ) ( not cycleway=left|right|no|none|opposite|proposed ) ) or ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) )  ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) ) ) then true
+		if and oneway=yes|true|1 ( or ( and ( not cycleway= ) ( not cycleway=left|right|no|none|opposite|proposed|unknown ) ) or ( and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) )  ( and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) ) ) then true
 		else if and oneway=-1 ( or cycleway=opposite_lane|opposite_track or cycleway:left=opposite_lane|opposite_track cycleway:right=opposite_lane|opposite_track ) then true
 		else false
 	# normal twoway street stuff with cycleway on only one side of the road
 	else if xor reversedirection=yes lefthandtraffic then
-		if and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath ) then true
+		if and ( not cycleway:left= ) ( not cycleway:left=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) then true
 		else if cycleway=left then true
 		else false
 	else if xor ( not reversedirection=yes ) lefthandtraffic then
-		if and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath ) then true
+		if and ( not cycleway:right= ) ( not cycleway:right=opposite|opposite_lane|opposite_track|no|sidepath|unknown ) then true
 		else if cycleway=right then true
 		else false
 	else false
@@ -242,6 +246,9 @@ assign bikeaccess
 assign footaccess
 	if ( not route=ferry ) then
 		if or highway=construction not construction= then false
+		else if and highway=steps not allow_steps then false
+		else if and highway=steps and allow_steps bicycle=yes|designated|permissive|mtb then true
+		else if and highway=steps and allow_steps and bicycle=destination looseaccessrules then true
 		else if foot=yes|designated|permissive then true
 		else if and foot=destination looseaccessrules then true
 		else if not foot= then false
@@ -249,15 +256,14 @@ assign footaccess
 		else if access=yes|permissive|designated then true
 		else if and access=destination|agricultural|customers|delivery looseaccessrules then true
 		else if not access= then false
-		else if and highway=steps bicycle=yes|designated|permissive|mtb then true
-		else if and highway=steps and bicycle=destination looseaccessrules then true
 		# no explicit access rules, make assumptions based on waytype
 		else if
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
 			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 			or highway=driveway|mini_roundabout|turning_loop
 			or highway=track|path|crossing|byway|unsurfaced
-			highway=footway|steps|pedestrian|corridor|platform
+			or highway=footway|pedestrian|corridor|platform
+			and highway=steps allow_steps
 			then true
 		else false
 	else false
@@ -748,7 +754,7 @@ assign smoothness_cost  add smoothness_cost
 		highway=turning_loop )
 		then 0.1
 	# waytypes that are almost certainly in good condition
-	else if and is_cycleroute (
+	else if and or is_cycleroute is_cycleroute_other (
 		or highway=residential
 		or highway=service
 		or highway=unclassified
@@ -772,7 +778,7 @@ assign smoothness_cost  add smoothness_cost
 	# footways are expected to be ok
 	else if highway=footway|pedestrian|platform then 0.1
 	# probably not too bad smoothness when dedicated for bike
-	else if bicycle=designated then 0.2
+	else if or is_cycleroute is_cycleroute_other then 0.2
 	# tracks are usualy slightly compacted, paths often grass or loose ground
 	else if and highway=track|byway is_wet then 3.0
 	else if highway=track|byway then 1.2
