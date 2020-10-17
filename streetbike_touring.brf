@@ -46,7 +46,7 @@ assign traffic_tier2 0.2
 assign traffic_tier3 0.5
 assign traffic_tier4 0.8
 
-assign speed_tier1 0.2
+assign speed_tier1 0.3
 assign speed_tier2 0.4
 assign speed_tier3 0.6
 assign speed_tier4 1.0
@@ -704,7 +704,8 @@ assign expavgnum
 	else if equal new_exp -1 then expavgnum
 	else 1
 
-assign smoothness_cost
+assign smoothness_cost if ( not embedded_rails= ) then 0.5 else 0.0
+assign smoothness_cost  add smoothness_cost
 	if greater expavgnum 0 then expcurrent
 	# no good indication of smoothness, fallback to make rough assumptions based on waytype
 	# waytypes that are likely in good condition, but add a little cost for unknown condition
@@ -752,7 +753,7 @@ assign smoothness_cost
 	else if highway=track|byway then 1.2
 	else if and highway=path is_wet then 5.0
 	else if highway=path then 2.0
-	else 1.5
+	else 2.0
 
 
 ################################################################
@@ -761,7 +762,7 @@ assign smoothness_cost
 
 assign low_traffic
 	if bicycle=designated then true
-	else if living_street=yes then true
+	else if or highway=living_street living_street=yes then true
 	else if bicycle_road=yes then true
 	else if motorcar=yes|permissive|designated then false
 	else if motorcycle=yes|permissive|designated then false
@@ -806,11 +807,11 @@ assign traffic_cost
 ################################################################
 
 assign maxspeed_cost_raw
-	if ( not maxspeed= ) then
-		if maxspeed=70|80 then speed_tier1
-		else if maxspeed=90|100|rural then speed_tier2
-		else if maxspeed=110 then speed_tier3
-		else if maxspeed=130 then speed_tier4
+	if ( or not maxspeed= or not maxspeed:forward= maxspeed:backward= ) then
+		if ( or maxspeed=70|80 or maxspeed:forward=70|80 maxspeed:backward=70|80 ) then speed_tier1
+		else if ( or maxspeed=90|100|rural or maxspeed:forward=90|100|rural maxspeed:backward=90|100|rural ) then speed_tier2
+		else if ( or maxspeed=110 or maxspeed:forward=110 maxspeed:backward=110 ) then speed_tier3
+		else if ( or maxspeed=120|130 or maxspeed:forward=120|130 maxspeed:backward=120|130 ) then speed_tier4
 		else 0.0
 	else if ( not highway= ) then
 		# very rough guess unfortunately
