@@ -943,11 +943,12 @@ assign bikeaccess
 	else true
 
 assign footaccess
-	if foot=yes|designated|permissive then true
+	if and highway=steps not allow_steps then false
+	else if and highway=steps and allow_steps bicycle=yes|designated|permissive then true
+	else if and highway=steps and allow_steps and bicycle=destination|dismount looseaccessrules then true
+	else if foot=yes|designated|permissive then true
 	else if and foot=destination looseaccessrules then true
 	else if not foot= then false
-	else if and highway=steps bicycle=yes|designated|permissive then true
-	else if and highway=steps and bicycle=destination|dismount looseaccessrules then true
 	else if access=yes|permissive|designated then true
 	else if and access=destination|agricultural looseaccessrules then true
 	else if not access= then false
