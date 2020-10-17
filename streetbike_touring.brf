@@ -832,7 +832,7 @@ assign traffic_cost
 ################################################################
 
 assign maxspeed_cost_raw
-	if ( or not maxspeed= or not maxspeed:forward= maxspeed:backward= ) then
+	if ( or not maxspeed= or not maxspeed:forward= not maxspeed:backward= ) then
 		if ( or maxspeed=70|80 or maxspeed:forward=70|80 maxspeed:backward=70|80 ) then speed_tier1
 		else if ( or maxspeed=90|100|rural or maxspeed:forward=90|100|rural maxspeed:backward=90|100|rural ) then speed_tier2
 		else if ( or maxspeed=110 or maxspeed:forward=110 maxspeed:backward=110 ) then speed_tier3
