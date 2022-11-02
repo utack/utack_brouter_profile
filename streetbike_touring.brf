@@ -129,7 +129,7 @@ assign traffic_direction_global
 		else if oneway=reversible then 2
 		else 1
 	else if ( not oneway= ) then
-		if oneway=yes|1|true then 1
+		if oneway=yes|1 then 1
 		else if oneway=-1 then -1
 		else if oneway=reversible then 2
 		else 0
@@ -203,7 +203,7 @@ assign hascycleway
 
 # Determine access properties for vehicles
 assign any_motoraccess  
-	if motorcar=yes|destination|designated|permissive|hov|psv then true
+	if motorcar=yes|destination|designated|permissive then true
 	else if motor_vehicle=yes|destination|designated|permissive then true
 	else if motorcycle=yes|destination|designated|permissive then true
 	else if and vehicle=yes|destination|designated|permissive not motor_vehicle=no|private|agricultural then true
@@ -213,8 +213,7 @@ assign any_motoraccess
 	else if access=no|private|agricultural then false
 	else if (
 		or highway=residential|service|unclassified|road|living_street|rest_area|services
-		or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
-		highway=driveway|mini_roundabout|turning_loop|unsurfaced )
+		highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link )
 		then true
 	else false
 
@@ -237,7 +236,7 @@ assign bikeaccess
 			or highway=residential|service|unclassified|road|living_street|rest_area|services
 			or highway=trunk|trunk_link|primary|primary_link|secondary|secondary_link|tertiary|tertiary_link
 			or highway=driveway|mini_roundabout|turning_loop
-			or highway=track|path|cycleway|crossing|byway|unsurfaced
+			or highway=track|path|cycleway|unsurfaced
 			( and highway=footway|pedestrian ( or is_cycleroute is_cycleroute_other ) )
 			then true
 		else false
@@ -986,7 +985,6 @@ assign node_cost =
 	else if railway=level_crossing then 80
 	else if railway=crossing then 80
 	else if highway=stop|give_way  then 25
-	else if highway=traffic_calming then 50
 	else if crossing=zebra then 50
 	else if ford=yes then 500
 	else 0
